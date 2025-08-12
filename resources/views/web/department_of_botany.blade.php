@@ -1,0 +1,72 @@
+<?php $this->load->view("frontend/header.php");?>
+
+<section class="banner-area relative about-banner" id="home">
+    <div class="overlay overlay-bg"></div>
+    <div class="container">
+        <div class="row d-flex align-items-center justify-content-center">
+            <div class="about-content col-lg-12">
+                <h1 class="text-white">
+                    Department of Botany
+                </h1>
+                <p class="text-white link-nav"><a href="index.php">Home </a> <span class="lnr lnr-arrow-right"></span> <a href=""> Academics</a> <span class="lnr lnr-arrow-right"></span> <a href="school_of_life_sciences.php">School of Life Sciences</a><span class="lnr lnr-arrow-right"></span> <a class="orange-text">Department of Botany</a></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="events-list-area section-gap event-page-lists">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-9 col-md-9 col-xs-12">
+                <div class="page-title">
+                    <h2><span>Department of </span> Botany</h2>
+                    <ul class="custom-list-style">
+                           <li class="mb-10">
+                            <span>&nbsp;<a href="download_brochure.php" 
+                               class="round-rectangle" style="margin-left:780px;">Download Brochure</a></span>
+                           </li>
+                       </ul>
+                </div>
+                <div class="mb-20">
+                    <div class="detials">
+                        <h4 class="inner-title">About Department</h4>
+                        <p class="text-justify">The Department of Botany at Mahatma Gandhi Central University, Bihar was established in 2016 with a focus on maintaining high academic standards and a strong research orientation towards academic excellence. Initially the three year undergraduate programme (B.Sc) in botany was launched to provide an indepth knowledge of plant science to undergraduate students. In the year 2019, the post-graduate, M.Phil and Ph.D programmes were started. The department boasts of internationally recognized faculty members who are actively engaged in teaching and high quality research. Within a few years the department has trnasformed into a centre for higher learning and research in structural and functional aspects of plants.</p>
+                    </div>
+                </div>               
+            </div>
+            <div class="col-sm-3 col-md-3 col-xs-12">
+    <div class="nav-side-menu">
+        <div class="brand">About Department</div>
+        <i class="fa fa-bars fa-2x toggle-btn" data-toggle="collapse" data-target="#menu-content"></i>
+        <div class="menu-list">
+            <ul id="menu-content" class="menu-content collapse out">
+                <li><a href="school_of_life_sciences.php"><i class="fa fa-arrow-circle-right"></i> Back to School Page</a></li>
+                <li><a href="department_of_botany_hod.php"><i class="fa fa-arrow-circle-right"></i> Head of Department</a></li>
+                <li><a href="department_of_botany_programme.php"><i class="fa fa-arrow-circle-right"></i> Programmes</a></li>
+                <li><a href="javascript:;" onclick="viewFun()"><i class="fa fa-arrow-circle-right"></i> Syllabus</a></li>
+                <li><a href="department_of_botany_faculty.php"><i class="fa fa-arrow-circle-right"></i> Faculty Details</a></li>
+                <li><a href="#"><i class="fa fa-arrow-circle-right"></i> Achievements/Events</a></li>
+                <li><a href="#"><i class="fa fa-arrow-circle-right"></i> Research/Publications</a></li>
+                <li><a href="department_of_botany_contact.php"><i class="fa fa-arrow-circle-right"></i> Contact Us</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+<form id="frm" method="post" action="syllabus_view.php"><input type="hidden" name="ids" value="11" /><button type="submit" style="display: none;"></button></form>
+<script>
+    function viewFun() {
+        $('#frm').submit();
+    }
+</script>        </div>
+    </div>
+</section>
+
+
+ <?php $this->load->view("frontend/footer.php");?>
+
+
+ <script type="text/javascript">
+    $(document).ready(function () {
+        document.title = "Department of Botany - Mahatma Gandhi Central University, Motihari (Bihar)";
+    });
+</script>
