@@ -28,14 +28,15 @@ class RazorpayController extends Controller
             abort(404, 'Certificate not found');
         }
         
-        $degreeCertificate = DegreeCertificate::where('degree_id', $Certificate->certificate)->first();
+        // Since we now store degree name instead of ID, we need to find by name
+        $degreeCertificate = DegreeCertificate::where('degree', $Certificate->certificate)->first();
         
         if (!$degreeCertificate) {
             abort(404, 'Degree certificate configuration not found');
         }
         
-        // Get the actual degree information
-        $degree = \App\Models\Degree::find($Certificate->certificate);
+        // Get the actual degree information by name
+        $degree = \App\Models\Degree::where('name', $Certificate->certificate)->first();
         if (!$degree) {
             abort(404, 'Degree not found');
         }

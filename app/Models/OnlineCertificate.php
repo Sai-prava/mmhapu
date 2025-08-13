@@ -13,7 +13,7 @@ class OnlineCertificate extends Model
         return $this->hasOne(Payment::class, 'certificate_id', 'id');
     }
 
-    public function getCourseCategory(){
-        return $this->belongsTo(CourseCategory::class, 'course_category_id');
-    }
+    // public function getCourseCategory(){
+    //     return $this->belongsTo(CourseCategory::class, 'course_category_id');
+    // }
 }

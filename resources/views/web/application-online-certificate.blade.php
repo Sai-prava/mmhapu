@@ -540,8 +540,7 @@
                                     Degree :</label>
                                 <div class="col-sm-12">
                                     <input type="date" class="form-control" name="recive_degree"
-                                        id="recive_degree" min="{{ now()->addMonth()->format('Y-m-d') }}"
-                                        placeholder="Date after 30 Days from Today"
+                                        id="recive_degree" placeholder="Date after 30 Days from Today"
                                         value="{{ old('recive_degree') }}">
                                     @error('recive_degree')
                                         <span class="text-danger"> {{ $message }} </span>
@@ -926,12 +925,33 @@
 <script>
     $(document).ready(function() {
         const inputDate = $('#recive_degree');
-        const today = new Date();
-        const oneMonthLater = new Date();
-        oneMonthLater.setMonth(today.getMonth() + 1);
-
-        const formattedOneMonthLater = oneMonthLater.toISOString().split('T')[0];
-        inputDate.attr('min', formattedOneMonthLater);
+        const urgentCheckbox = $('#urgent_mode');
+        
+        function updateDateValidation() {
+            const today = new Date();
+            let minDate = new Date();
+            
+            if (urgentCheckbox.is(':checked')) {
+                // Urgent mode: 7 days from today
+                minDate.setDate(today.getDate() + 7);
+                inputDate.attr('placeholder', 'Date after 7 Days from Today');
+            } else {
+                // Normal mode: 30 days from today
+                minDate.setMonth(today.getMonth() + 1);
+                inputDate.attr('placeholder', 'Date after 30 Days from Today');
+            }
+            
+            const formattedMinDate = minDate.toISOString().split('T')[0];
+            inputDate.attr('min', formattedMinDate);
+        }
+        
+        // Set initial validation
+        updateDateValidation();
+        
+        // Update validation when urgent mode changes
+        urgentCheckbox.on('change', function() {
+            updateDateValidation();
+        });
     });
 </script>
 <script>

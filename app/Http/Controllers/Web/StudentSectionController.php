@@ -147,8 +147,23 @@ class StudentSectionController extends Controller
             $query->where('payment', $request->payment_type);
         }
 
+        // Urgent mode filter
+        if ($request->filled('urgent_mode')) {
+            $query->where('urgent_mode', $request->urgent_mode);
+        }
+
         return DataTables::eloquent($query)
             ->addIndexColumn()
+            ->addColumn(
+                'urgent_mode_status',
+                function($row) {
+                    if ($row->urgent_mode == 1) {
+                        return '<span class="badge bg-warning">Urgent</span>';
+                    } else {
+                        return '<span class="badge bg-secondary">Normal</span>';
+                    }
+                }
+            )
             ->addColumn(
                 'created_at_formatted',
                 fn($row) =>
@@ -190,7 +205,7 @@ class StudentSectionController extends Controller
                 <button type="button" class="btn btn-danger btn-sm delete-btn" data-url="' . $deleteUrl . '">Delete</button>
             ';
             })
-            ->rawColumns(['payment_status', 'action'])
+            ->rawColumns(['payment_status', 'urgent_mode_status', 'action'])
             ->make(true);
     }
 

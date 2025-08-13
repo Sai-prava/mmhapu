@@ -4,6 +4,26 @@
     Application Online Certificate
 @endsection
 
+<style>
+    .urgent-row {
+        background-color: #fff3cd !important;
+        border-left: 4px solid #ffc107 !important;
+    }
+    
+    .urgent-row:hover {
+        background-color: #ffeaa7 !important;
+    }
+    
+    .badge.bg-warning {
+        color: #000 !important;
+        font-weight: bold;
+    }
+    
+    .badge.bg-secondary {
+        color: #fff !important;
+    }
+</style>
+
 @section('content')
 <div class="main-body">
     <div class="page-wrapper">
@@ -21,6 +41,14 @@
                                 <label for="to_date">Date To:</label>
                                 <input type="date" class="form-control" id="to_date" name="to_date">
                             </div>
+                            <div class="me-3">
+                                <label for="urgent_mode">Urgent Mode:</label>
+                                <select class="form-control" id="urgent_mode">
+                                    <option value="">All</option>
+                                    <option value="1">Yes</option>
+                                    <option value="0">No</option>
+                                </select>
+                            </div>
                             <div class="me-3 align-self-end">
                                 <button class="btn btn-primary" id="filter_button">Filter</button>
                             </div>
@@ -36,6 +64,16 @@
                     </div>
 
                     <div class="card-block pdng">
+                        {{-- <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <strong>Filter Summary:</strong>
+                                    <span id="total-count">0</span> total applications
+                                    <span id="urgent-count" class="ms-3">0</span> urgent
+                                    <span id="normal-count" class="ms-3">0</span> normal
+                                </div>
+                            </div>
+                        </div> --}}
                         <div class="table-responsive">
                             <table id="payment_table" class="display table table-bordered nowrap table-striped table-hover" style="width:100%">
                                 <thead class="bg-primary text-white sticky-top">
@@ -49,6 +87,7 @@
                                         <th>Request No.</th>
                                         <th>Request for</th>
                                         <th>Applied Certificate</th>
+                                        <th>Urgent Mode</th>
                                         <th>Date of Application</th>
                                         <th>Payment Status</th>
                                         <th>Transaction Number</th>
@@ -83,6 +122,7 @@ $(document).ready(function() {
                 d.from_date = $('#from_date').val();
                 d.to_date = $('#to_date').val();
                 d.payment_type = $('#payment_type').val();
+                d.urgent_mode = $('#urgent_mode').val();
             }
         },
         order: [[9, 'desc']],
@@ -96,6 +136,7 @@ $(document).ready(function() {
             { data: 'request_id', name: 'request_id' },
             { data: 'change_type', name: 'change_type' },
             { data: 'certificate', name: 'certificate' },
+            { data: 'urgent_mode_status', name: 'urgent_mode_status', orderable: false, searchable: false },
             { data: 'created_at_formatted', name: 'created_at' },
             { data: 'payment_status', orderable: false, searchable: false },
             { data: 'transaction_number', orderable: false, searchable: false },
@@ -112,6 +153,45 @@ $(document).ready(function() {
 
     $('#payment_type').on('change', function() {
         table.ajax.reload();
+    });
+
+    $('#urgent_mode').on('change', function() {
+        table.ajax.reload();
+    });
+
+    // Update summary counts when table data changes
+    table.on('xhr.dt', function() {
+        let data = table.ajax.json();
+        if (data && data.recordsTotal !== undefined) {
+            $('#total-count').text(data.recordsTotal);
+            
+            // Count urgent and normal applications from current data
+            let urgentCount = 0;
+            let normalCount = 0;
+            
+            table.rows({search: 'applied'}).data().each(function(row) {
+                if (row.urgent_mode_status && row.urgent_mode_status.includes('Urgent')) {
+                    urgentCount++;
+                } else {
+                    normalCount++;
+                }
+            });
+            
+            $('#urgent-count').text(urgentCount);
+            $('#normal-count').text(normalCount);
+        }
+    });
+
+    // Highlight urgent rows
+    table.on('draw.dt', function() {
+        table.rows().every(function() {
+            let data = this.data();
+            if (data.urgent_mode_status && data.urgent_mode_status.includes('Urgent')) {
+                $(this.node()).addClass('urgent-row');
+            } else {
+                $(this.node()).removeClass('urgent-row');
+            }
+        });
     });
 
     // Delete action
