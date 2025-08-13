@@ -53,6 +53,8 @@ class StudentSectionController extends Controller
             'recive_degree' => 'required',
             'recive_mode' => 'required',
             'course_category_id' => 'required',
+            'document_id' => 'nullable|array',
+            'document_file.*' => 'nullable|file',
         ]);
         // dd($request->document_id[2]);
 
@@ -90,18 +92,21 @@ class StudentSectionController extends Controller
         $certificateStore->urgent_mode = $request->urgent_mode ? 1 : 0;
         $certificateStore->save();
 
-        $count = count($request->document_id);
-        for ($i = 0; $i < $count; $i++) {
-            $documents = new CertificateDocument();
-            $documents->certificate_id = $certificateStore->id;
-            $documents->document_id = $request->document_id[$i];
-            if ($request->hasFile("document_file.$i")) {
-                $document = $request->file('document_file')[$i];
-                $document_name = $document->getClientOriginalName(); // Add a unique prefix
-                $document->move(public_path('uploads/certificate_documents'), $document_name);
-                $documents->documents = $document_name;
+        // Only process documents if document_id array exists and is not empty
+        if ($request->has('document_id') && is_array($request->document_id) && count($request->document_id) > 0) {
+            $count = count($request->document_id);
+            for ($i = 0; $i < $count; $i++) {
+                $documents = new CertificateDocument();
+                $documents->certificate_id = $certificateStore->id;
+                $documents->document_id = $request->document_id[$i];
+                if ($request->hasFile("document_file.$i")) {
+                    $document = $request->file('document_file')[$i];
+                    $document_name = $document->getClientOriginalName(); // Add a unique prefix
+                    $document->move(public_path('uploads/certificate_documents'), $document_name);
+                    $documents->documents = $document_name;
+                }
+                $documents->save();
             }
-            $documents->save();
         }
 
         $encryptedId = Crypt::encrypt($certificateStore->id);

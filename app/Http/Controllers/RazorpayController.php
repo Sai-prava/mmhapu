@@ -23,14 +23,52 @@ class RazorpayController extends Controller
     {
         $ID = Crypt::decrypt($id);
         $Certificate = OnlineCertificate::find($ID);
-        $degreeCertificate = DegreeCertificate::where('degree', $Certificate->certificate)->first();
+        
+        if (!$Certificate) {
+            abort(404, 'Certificate not found');
+        }
+        
+        $degreeCertificate = DegreeCertificate::where('degree_id', $Certificate->certificate)->first();
+        
+        if (!$degreeCertificate) {
+            abort(404, 'Degree certificate configuration not found');
+        }
+        
+        // Get the actual degree information
+        $degree = \App\Models\Degree::find($Certificate->certificate);
+        if (!$degree) {
+            abort(404, 'Degree not found');
+        }
+        
+        // Get urgent mode fee if urgent mode is selected
+        $urgentFee = 0;
+        if ($Certificate->urgent_mode) {
+            $urgentMode = \App\Models\UrgentMode::first();
+            if ($urgentMode) {
+                $urgentFee = $urgentMode->amount;
+            }
+        }
+        
+        $basePrice = $degreeCertificate->price;
+        $totalPrice = $basePrice + $urgentFee;
+        
+        // Store pricing info in session for later use
+        session([
+            'certificate_pricing' => [
+                'base_price' => $basePrice,
+                'urgent_fee' => $urgentFee,
+                'total_price' => $totalPrice,
+                'certificate_id' => $Certificate->id
+            ]
+        ]);
+        
         // dd($degreeCertificate->price);
         $key_id ='rzp_live_undbzXL0KAgXPc';
         $secret ='HJtUPAoPeyzQUUTFs6CwuNKI';
         $api = new Api($key_id, $secret);
         $order = $api->order->create(
             array(
-                'amount' => $degreeCertificate->price*100, 
+                'amount' => $totalPrice * 100, 
                 'currency' => 'INR', 
                 'notes'=> array(
                     'key1'=> 'Student Online Certificate Order.',
@@ -38,7 +76,7 @@ class RazorpayController extends Controller
                 )
             )
         );
-        return view('web.razorpay', compact('ID','degreeCertificate','order'));
+        return view('web.razorpay', compact('ID','degreeCertificate','order','basePrice','urgentFee','totalPrice','degree'));
     }
     /**
      * Write code on Method
@@ -48,6 +86,7 @@ class RazorpayController extends Controller
     public function store(Request $request)
     {
         $input = $request->all();
+        // dd($input);
         $certificate = OnlineCertificate::where('id', $request->certificate_id)->first();
         $key_id ='rzp_live_undbzXL0KAgXPc';
         $secret = 'HJtUPAoPeyzQUUTFs6CwuNKI';
@@ -58,9 +97,16 @@ class RazorpayController extends Controller
         if (count($input)  && !empty($input['razorpay_payment_id'])) {
             try {
                 $response = $api->payment->fetch($input['razorpay_payment_id']);
+                
+                // Get pricing information from session
+                $pricing = session('certificate_pricing', []);
+                $basePrice = $pricing['base_price'] ?? 0;
+                $urgentFee = $pricing['urgent_fee'] ?? 0;
+                
                 $payment = Payment::create([
                     'certificate_id' => $certificate->id,
-                    'amount' => $response['amount'] / 100,
+                    'amount' => $basePrice, // Store base price only
+                    'urgent_fee' => $urgentFee, // Store urgent fee separately
                     'transation_date' => date('Y-m-d H:i:s'),
                     'transaction_number' => $response['id'],
                     'method' => $response['method'],

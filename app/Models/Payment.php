@@ -11,6 +11,7 @@ class Payment extends Model
     protected $fillable = [
         'certificate_id',
         'amount',
+        'urgent_fee',
         'transation_date',
         'transaction_number',
         'method',

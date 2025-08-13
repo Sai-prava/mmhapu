@@ -91,18 +91,54 @@
                             </div>
                             <div class="card-body">
                                 <div class="text-center mb-4">
-                                    <img src="https://mmhapu.ac.in/web/images/logo.jpeg"
-                                        class="img-fluid" alt="Logo" style="max-width: 100px;">
+                                    <img src="https://mmhapu.ac.in/web/images/logo.jpeg" class="img-fluid"
+                                        alt="Logo" style="max-width: 100px;">
                                 </div>
 
                                 <!-- Razorpay Payment Button -->
+                                <!-- Price Breakdown Display -->
+                                <div class="price-breakdown mb-3">
+                                    <div class="row">
+                                        <div class="col-md-8 mx-auto">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h6 class="card-title text-center mb-3">Payment Details</h6>
+
+                                                    <!-- Degree Information -->
+                                                    <div class="text-center mb-3">
+                                                        <strong>Degree: {{ $degree->name ?? 'N/A' }}</strong>
+                                                    </div>
+
+                                                    <!-- Price Breakdown -->
+                                                    <div class="d-flex justify-content-between mb-2">
+                                                        <span>Base Price:</span>
+                                                        <span>₹{{ number_format($basePrice, 2) }}</span>
+                                                    </div>
+                                                    @if ($urgentFee > 0)
+                                                        <div class="d-flex justify-content-between mb-2">
+                                                            <span>Urgent Processing Fee:</span>
+                                                            <span>₹{{ number_format($urgentFee, 2) }}</span>
+                                                        </div>
+                                                    @endif
+                                                    <hr>
+                                                    <div class="d-flex justify-content-between fw-bold fs-5">
+                                                        <span>Total Amount:</span>
+                                                        <span>₹{{ number_format($totalPrice, 2) }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <form class="razorpay-container" action="{{ route('razorpay.store') }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="certificate_id" value="{{ $ID }}">
-                                    <input type="hidden" name="order_id" value="{{@$order->id}}">
-                                    <script src="https://checkout.razorpay.com/v1/checkout.js" data-key="rzp_live_undbzXL0KAgXPc" data-amount="{{ $degreeCertificate->price *100 }}"
-                                        data-currency="INR" data-order_id="{{@$order->id}}" data-buttontext="Pay {{ $degreeCertificate->price }} Now" data-name="REGISTRAR, MMHAPU" data-description="Payment"
-                                        data-image="https://mmhapu.ac.in/web/images/logo.jpeg" data-prefill.name="John Doe"
+                                    <input type="hidden" name="order_id" value="{{ @$order->id }}">
+                                    <script src="https://checkout.razorpay.com/v1/checkout.js" data-key="rzp_live_undbzXL0KAgXPc"
+                                        data-amount="{{ $totalPrice * 100 }}" data-currency="INR" data-order_id="{{ @$order->id }}"
+                                        data-buttontext="Pay ₹{{ number_format($totalPrice, 2) }} Now" data-name="REGISTRAR, MMHAPU"
+                                        data-description="Payment" data-image="https://mmhapu.ac.in/web/images/logo.jpeg" data-prefill.name="John Doe"
                                         data-prefill.email="john@example.com" data-theme.color="#F37254"></script>
                                 </form>
                             </div>
@@ -112,6 +148,42 @@
             </div>
         </main>
     </div>
+
+    <!-- JavaScript for Price Calculations -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get the pricing data from PHP variables
+            const basePrice = {{ $basePrice }};
+            const urgentFee = {{ $urgentFee }};
+            const totalPrice = {{ $totalPrice }};
+            const degreeName = "{{ $degree->name ?? 'N/A' }}";
+
+            // Function to update price display
+            function updatePriceDisplay() {
+                const basePriceElement = document.querySelector(
+                    '.price-breakdown .card-body .d-flex:first-child span:last-child');
+                const urgentFeeElement = document.querySelector(
+                    '.price-breakdown .card-body .d-flex:nth-child(2) span:last-child');
+                const totalPriceElement = document.querySelector(
+                    '.price-breakdown .card-body .d-flex:last-child span:last-child');
+
+                if (basePriceElement) basePriceElement.textContent = '₹' + basePrice.toFixed(2);
+                if (urgentFeeElement) urgentFeeElement.textContent = '₹' + urgentFee.toFixed(2);
+                if (totalPriceElement) totalPriceElement.textContent = '₹' + totalPrice.toFixed(2);
+            }
+
+            // Initialize price display
+            updatePriceDisplay();
+
+            // Log pricing information for debugging
+            console.log('Payment Details:', {
+                degree: degreeName,
+                basePrice: basePrice,
+                urgentFee: urgentFee,
+                totalPrice: totalPrice
+            });
+        });
+    </script>
 </body>
 
 </html>
