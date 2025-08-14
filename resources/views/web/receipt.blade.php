@@ -55,6 +55,18 @@
         button:hover {
             background-color: #0056b3;
         }
+        
+        .urgent-mode {
+            background-color: #fff3cd !important;
+            color: #856404 !important;
+            font-weight: bold !important;
+        }
+        
+        .amount-highlight {
+            background-color: #d4edda !important;
+            color: #155724 !important;
+            font-weight: bold !important;
+        }
     </style>
 </head>
 
@@ -86,26 +98,40 @@
                 <td>{{ $certificate }}</td>
             </tr>
             <tr>
+                <th>Request Type:</th>
+                <td class="{{ $request_type == 'Urgent Mode' ? 'urgent-mode' : '' }}">{{ $request_type }}</td>
                 <th>Dept/College:</th>
                 <td>{{ $college }}</td>
+            </tr>
+            <tr>
                 <th>Course:</th>
                 <td> {{ $course }} </td>
-            </tr>
-            <tr>
                 <th>Session:</th>
                 <td>{{ $session }}</td>
-                <th>Application Status:</th>
-                <td>Submit</td>
             </tr>
             <tr>
-                <th>Transaction ID / Amount:</th>
-                <td>{{ $transaction_number }} / {{ $amount }} {{ $currency }}</td>
+                <th>Application Status:</th>
+                <td>Submit</td>
+                <th>Base Amount:</th>
+                <td>{{ $amount }} {{ $currency }}</td>
+            </tr>
+            <tr>
+                <th>Urgent Fee:</th>
+                <td class="{{ $urgent_fee > 0 ? 'urgent-mode' : '' }}">{{ $urgent_fee > 0 ? $urgent_fee . ' ' . $currency : 'N/A' }}</td>
+                <th>Total Amount:</th>
+                <td class="amount-highlight">{{ $total_amount }} {{ $currency }}</td>
+            </tr>
+            <tr>
+                <th>Transaction ID:</th>
+                <td>{{ $transaction_number }}</td>
                 <th>Payment Status:</th>
                 <td>{{ $payment }}</td>
             </tr>
             <tr>
-                <th style="width: 25%;">Document (If ready by Univ):</th>
-                <td colspan="3" style="height: 30px;"></td>
+                <th>Payment Method:</th>
+                <td>{{ $method }}</td>
+                <th>Document (If ready by Univ):</th>
+                <td style="height: 30px;"></td>
             </tr>
             <tr>
                 <th>Note:</th>

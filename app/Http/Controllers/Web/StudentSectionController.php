@@ -134,9 +134,7 @@ class StudentSectionController extends Controller
     public function getCertificatesData(Request $request)
     {
         try {
-            $query = OnlineCertificate::with('getPayment')
-                ->join('degrees', 'online_certificates.certificate', '=', 'degrees.id')
-                ->select('online_certificates.*', 'degrees.name as degree_name');
+            $query = OnlineCertificate::with(['getPayment', 'degree']);
 
             // Date filter
             if ($request->filled('from_date') && $request->filled('to_date')) {
@@ -158,8 +156,12 @@ class StudentSectionController extends Controller
             return DataTables::eloquent($query)
                 ->addIndexColumn()
                 ->addColumn(
+                    'degree_name',
+                    fn($row) => optional($row->degree)->name ?? 'N/A'
+                )
+                ->addColumn(
                     'urgent_mode_status',
-                    function($row) {
+                    function ($row) {
                         if ($row->urgent_mode == 1) {
                             return '<span class="badge bg-warning">Urgent</span>';
                         } else {
@@ -213,7 +215,7 @@ class StudentSectionController extends Controller
         } catch (\Exception $e) {
             \Log::error('DataTables error: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
-            
+
             return response()->json([
                 'error' => 'An error occurred while processing the request: ' . $e->getMessage()
             ], 500);
@@ -250,7 +252,7 @@ class StudentSectionController extends Controller
     public function checkMobileNumber(Request $request)
     {
         $certificates = OnlineCertificate::where('reg_no', $request->reg_no)
-            ->with('getPayment')
+            ->with(['getPayment', 'degree'])
             ->get();
 
         return response()->json([
@@ -311,11 +313,13 @@ class StudentSectionController extends Controller
 
     public function viewCertificate($reg_no)
     {
-        $certificate = OnlineCertificate::where('reg_no', $reg_no)->firstOrFail();
-        $degree_certificate = DegreeCertificate::all();
-        $degree = DegreeCertificate::where('degree', $certificate->certificate)->first();
+        $certificate = OnlineCertificate::where('reg_no', $reg_no)
+            ->with('degree')
+            ->firstOrFail();
 
-        return view('web.view-online-certificate', compact('certificate', 'degree_certificate', 'degree'));
+        $degree_certificate = DegreeCertificate::all();
+
+        return view('web.view-online-certificate', compact('certificate', 'degree_certificate'));
     }
 
     public function checkReceipt(Request $request)
@@ -323,7 +327,7 @@ class StudentSectionController extends Controller
         $request->validate([
             'reg_no' => 'required',
         ]);
-        $receipt = OnlineCertificate::where('reg_no', $request->reg_no)->first();
+        $receipt = OnlineCertificate::where('reg_no', $request->reg_no)->with('degree')->first();
         if ($receipt) {
             return redirect()->route('generateReceipt', ['reg_no' => $request->reg_no]);
         } else {
@@ -334,12 +338,21 @@ class StudentSectionController extends Controller
 
     public function generateReceipt($id)
     {
-        $receipt = OnlineCertificate::find($id);
+        $receipt = OnlineCertificate::with('degree')->find($id);
         if (!$receipt) {
             abort(404, 'Receipt not found');
         }
 
         $payment = $receipt->getPayment;
+        
+        // Calculate total amount including urgent fee
+        $baseAmount = $payment ? $payment->amount : 0;
+        $urgentFee = $payment ? $payment->urgent_fee : 0;
+        $totalAmount = $baseAmount + $urgentFee;
+        
+        // Determine request type based on urgent mode
+        $requestType = $receipt->urgent_mode == 1 ? 'Urgent Mode' : 'Normal Mode';
+        
         $data = [
             'name' => $receipt->name,
             'request_id' => $receipt->request_id,
@@ -353,12 +366,15 @@ class StudentSectionController extends Controller
             'roll_no' => $receipt->roll_no,
             'father_name' => $receipt->father_name,
             'change_type' => $receipt->change_type,
-            'certificate' => $receipt->certificate,
+            'certificate' => $receipt->degree ? $receipt->degree->name : 'N/A',
             'course' => $receipt->course,
             'created_at' => Carbon::parse($receipt->created_at)->format('jS F Y'),
             'method' => $payment ? $payment->method : 'N/A',
             'transaction_number' => $payment ? $payment->transaction_number : 'N/A',
             'amount' => $payment ? $payment->amount : 'N/A',
+            'urgent_fee' => $urgentFee,
+            'total_amount' => $totalAmount,
+            'request_type' => $requestType,
             'currency' => $payment ? $payment->currency : '',
         ];
 
@@ -433,9 +449,9 @@ class StudentSectionController extends Controller
     {
         // Find degree certificate by degree_id and change_type
         $degreeCertificate = DegreeCertificate::where('degree_id', $request->degree_id)
-                                              ->where('change_type', $request->change_type)
-                                              ->first();
-        
+            ->where('change_type', $request->change_type)
+            ->first();
+
         return response()->json([
             'price' => $degreeCertificate ? $degreeCertificate->price : 0
         ]);
@@ -460,9 +476,8 @@ class StudentSectionController extends Controller
 
         // Fetch degree names
         $degrees = Degree::whereIn('id', $degreeIds)
-                         ->get(['id', 'name']);
+            ->get(['id', 'name']);
 
         return response()->json($degrees);
     }
-   
 }

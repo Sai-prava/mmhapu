@@ -251,12 +251,11 @@
                             <label for="Certificate" class="col-sm-2 col-form-label text-right">Request
                                 For:</label>
                             <div class="col-sm-10">
-                                <select name="certificate" class="form-control" disabled>
-                                    @foreach ($degree_certificate as $data)
-                                        <option value="{{ $data->degree }}"
-                                            {{ $data->degree == $certificate->certificate ? 'selected' : '' }}>
-                                            {{ $data->degree }}</option>
-                                    @endforeach
+                                <input type="text" class="form-control"
+                                    value="{{ $certificate->degree ? $certificate->degree->name : 'N/A' }}" disabled>
+
+                                @foreach ($degree_certificate as $data)
+                                @endforeach
                                 </select>
                             </div>
                         </div>
@@ -274,10 +273,9 @@
                         <div class="form-group row">
                             <label class="col-sm-2 col-form-label text-right">Course Category:</label>
                             <div class="col-sm-10">
-                                <input type="text" class="form-control" name="course"
-                                    placeholder="Enter Course" value="@if ($certificate->getCourseCategory)
-{{ $certificate->getCourseCategory->name }}
-                                    @endif" disabled>
+                                <input type="text" class="form-control" name="course" placeholder="Enter Course"
+                                    value="@if ($certificate->getCourseCategory) {{ $certificate->getCourseCategory->name }} @endif"
+                                    disabled>
                                 @error('course')
                                     <span class="text-danger"> {{ $message }} </span>
                                 @enderror
@@ -287,8 +285,8 @@
                         <div class="form-group row">
                             <label for="mobile" class="col-sm-2 col-form-label text-right">Course:</label>
                             <div class="col-sm-10">
-                                <input type="text" class="form-control" name="course"
-                                    placeholder="Enter Course" value="{{ $certificate->course }}" disabled>
+                                <input type="text" class="form-control" name="course" placeholder="Enter Course"
+                                    value="{{ $certificate->course }}" disabled>
                                 @error('course')
                                     <span class="text-danger"> {{ $message }} </span>
                                 @enderror

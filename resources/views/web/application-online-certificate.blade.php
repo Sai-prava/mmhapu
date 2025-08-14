@@ -1021,8 +1021,8 @@
 
                                 let row = `<tr>                               
                                 <td>${cert.course}</td>
-                                <td>${cert.certificate}</td>
-                               <td>${cert.change_type}</td>
+                                <td>${cert.degree ? cert.degree.name : 'N/A'}</td>
+                                <td>${cert.change_type}</td>
                                 <td>${paymentStatus}</td>
                                 <td>${actionButton}</td>
                                 <td>${downloadButtons}</td>
