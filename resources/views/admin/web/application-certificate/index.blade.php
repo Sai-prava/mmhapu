@@ -118,11 +118,21 @@ $(document).ready(function() {
         buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
         ajax: {
             url: "{{ route('admin.getCertificatesData') }}",
+            type: 'POST',
             data: function(d) {
                 d.from_date = $('#from_date').val();
                 d.to_date = $('#to_date').val();
                 d.payment_type = $('#payment_type').val();
                 d.urgent_mode = $('#urgent_mode').val();
+                d._token = "{{ csrf_token() }}";
+            },
+            error: function(xhr, error, thrown) {
+                console.error('DataTables Ajax error:', {
+                    xhr: xhr,
+                    error: error,
+                    thrown: thrown,
+                    responseText: xhr.responseText
+                });
             }
         },
         order: [[9, 'desc']],
@@ -135,7 +145,7 @@ $(document).ready(function() {
             { data: 'session', name: 'session' },
             { data: 'request_id', name: 'request_id' },
             { data: 'change_type', name: 'change_type' },
-            { data: 'certificate', name: 'certificate' },
+            { data: 'degree_name', name: 'degree_name' }, // Changed from 'certificate' to 'degree_name'
             { data: 'urgent_mode_status', name: 'urgent_mode_status', orderable: false, searchable: false },
             { data: 'created_at_formatted', name: 'created_at' },
             { data: 'payment_status', orderable: false, searchable: false },

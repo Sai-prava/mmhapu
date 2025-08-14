@@ -133,80 +133,91 @@ class StudentSectionController extends Controller
     }
     public function getCertificatesData(Request $request)
     {
-        $query = OnlineCertificate::with('getPayment')->select('online_certificates.*');
+        try {
+            $query = OnlineCertificate::with('getPayment')
+                ->join('degrees', 'online_certificates.certificate', '=', 'degrees.id')
+                ->select('online_certificates.*', 'degrees.name as degree_name');
 
-        // Date filter
-        if ($request->filled('from_date') && $request->filled('to_date')) {
-            $from = Carbon::createFromFormat('Y-m-d', $request->from_date)->startOfDay();
-            $to   = Carbon::createFromFormat('Y-m-d', $request->to_date)->endOfDay();
-            $query->whereBetween('online_certificates.created_at', [$from, $to]);
-        }
+            // Date filter
+            if ($request->filled('from_date') && $request->filled('to_date')) {
+                $from = Carbon::createFromFormat('Y-m-d', $request->from_date)->startOfDay();
+                $to   = Carbon::createFromFormat('Y-m-d', $request->to_date)->endOfDay();
+                $query->whereBetween('online_certificates.created_at', [$from, $to]);
+            }
 
-        // Payment filter
-        if ($request->filled('payment_type')) {
-            $query->where('payment', $request->payment_type);
-        }
+            // Payment filter
+            if ($request->filled('payment_type')) {
+                $query->where('online_certificates.payment', $request->payment_type);
+            }
 
-        // Urgent mode filter
-        if ($request->filled('urgent_mode')) {
-            $query->where('urgent_mode', $request->urgent_mode);
-        }
+            // Urgent mode filter
+            if ($request->filled('urgent_mode')) {
+                $query->where('online_certificates.urgent_mode', $request->urgent_mode);
+            }
 
-        return DataTables::eloquent($query)
-            ->addIndexColumn()
-            ->addColumn(
-                'urgent_mode_status',
-                function($row) {
-                    if ($row->urgent_mode == 1) {
-                        return '<span class="badge bg-warning">Urgent</span>';
-                    } else {
-                        return '<span class="badge bg-secondary">Normal</span>';
+            return DataTables::eloquent($query)
+                ->addIndexColumn()
+                ->addColumn(
+                    'urgent_mode_status',
+                    function($row) {
+                        if ($row->urgent_mode == 1) {
+                            return '<span class="badge bg-warning">Urgent</span>';
+                        } else {
+                            return '<span class="badge bg-secondary">Normal</span>';
+                        }
                     }
-                }
-            )
-            ->addColumn(
-                'created_at_formatted',
-                fn($row) =>
-                $row->created_at ? $row->created_at->format('d/m/Y') : ''
-            )
-            ->addColumn(
-                'payment_status',
-                fn($row) =>
-                $row->payment === 'completed'
-                    ? '<span class="badge bg-success">Completed</span>'
-                    : '<span class="badge bg-danger">Pending</span>'
-            )
-            ->addColumn(
-                'transaction_number',
-                fn($row) =>
-                optional($row->getPayment)->transaction_number ?? 'N/A'
-            )
-            ->addColumn(
-                'transaction_date',
-                fn($row) =>
-                optional($row->getPayment)->transation_date ?? 'N/A'
-            )
-            ->addColumn(
-                'payment_method',
-                fn($row) =>
-                optional($row->getPayment)->method ?? 'N/A'
-            )
-            ->addColumn(
-                'certificate_status_text',
-                fn($row) =>
-                $row->certificate_status == 0 ? 'Pending' : 'Issued'
-            )
-            ->addColumn('action', function ($row) {
-                $editUrl = route('admin.certificateEdit', $row->id);
-                $deleteUrl = route('admin.applicationDelete', $row->id);
+                )
+                ->addColumn(
+                    'created_at_formatted',
+                    fn($row) =>
+                    $row->created_at ? $row->created_at->format('d/m/Y') : ''
+                )
+                ->addColumn(
+                    'payment_status',
+                    fn($row) =>
+                    $row->payment === 'completed'
+                        ? '<span class="badge bg-success">Completed</span>'
+                        : '<span class="badge bg-danger">Pending</span>'
+                )
+                ->addColumn(
+                    'transaction_number',
+                    fn($row) =>
+                    optional($row->getPayment)->transaction_number ?? 'N/A'
+                )
+                ->addColumn(
+                    'transaction_date',
+                    fn($row) =>
+                    optional($row->getPayment)->transation_date ?? 'N/A'
+                )
+                ->addColumn(
+                    'payment_method',
+                    fn($row) =>
+                    optional($row->getPayment)->method ?? 'N/A'
+                )
+                ->addColumn(
+                    'certificate_status_text',
+                    fn($row) =>
+                    $row->certificate_status == 0 ? 'Pending' : 'Issued'
+                )
+                ->addColumn('action', function ($row) {
+                    $editUrl = route('admin.certificateEdit', $row->id);
+                    $deleteUrl = route('admin.applicationDelete', $row->id);
 
-                return '
-                <a href="' . $editUrl . '" class="btn btn-primary btn-sm">Edit</a>
-                <button type="button" class="btn btn-danger btn-sm delete-btn" data-url="' . $deleteUrl . '">Delete</button>
-            ';
-            })
-            ->rawColumns(['payment_status', 'urgent_mode_status', 'action'])
-            ->make(true);
+                    return '
+                    <a href="' . $editUrl . '" class="btn btn-primary btn-sm">Edit</a>
+                    <button type="button" class="btn btn-danger btn-sm delete-btn" data-url="' . $deleteUrl . '">Delete</button>
+                ';
+                })
+                ->rawColumns(['payment_status', 'urgent_mode_status', 'action'])
+                ->make(true);
+        } catch (\Exception $e) {
+            \Log::error('DataTables error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'error' => 'An error occurred while processing the request: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function certificateEdit($id)
@@ -420,9 +431,13 @@ class StudentSectionController extends Controller
 
     public function getDegreePrice(Request $request)
     {
-        $degree = DegreeCertificate::where('degree_id', $request->degree_id)->first();
+        // Find degree certificate by degree_id and change_type
+        $degreeCertificate = DegreeCertificate::where('degree_id', $request->degree_id)
+                                              ->where('change_type', $request->change_type)
+                                              ->first();
+        
         return response()->json([
-            'price' => $degree ? $degree->price : 0
+            'price' => $degreeCertificate ? $degreeCertificate->price : 0
         ]);
     }
     public function filterDegrees(Request $request)

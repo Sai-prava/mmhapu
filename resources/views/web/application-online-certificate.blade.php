@@ -886,39 +886,70 @@
                     if (!urgent) {
                         $('#total-price-wrapper').hide();
                     }
+                    
+                    // Reset price display when urgent mode changes
+                    $('#price-display').hide();
+                    basePrice = 0;
                 }
             });
         });
 
-        // When degree is selected, fetch its price
+        // When change type changes, reset price and fetch new price if degree is selected
+        $('#certificate-select').on('change', function() {
+            $('#price-display').hide();
+            basePrice = 0;
+            
+            // If degree is already selected, fetch new price for this change type
+            let degreeId = $('#degree_id').val();
+            if (degreeId) {
+                fetchDegreePrice(degreeId, $(this).val());
+            }
+        });
+
+        // When degree is selected, fetch its price based on change type
         $('#degree_id').on('change', function() {
             let degreeId = $(this).val();
+            let changeType = $('#certificate-select').val();
 
-            if (degreeId) {
-                $.ajax({
-                    type: "POST",
-                    url: "{{ route('getDegreePrice') }}",
-                    data: {
-                        degree_id: degreeId,
-                        _token: "{{ csrf_token() }}"
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        basePrice = parseFloat(response.price) || 0;
-                        $('#base-price').text(basePrice.toFixed(2));
-                        $('#price-display').show();
-
-                        if ($('#urgent_mode').is(':checked')) {
-                            $('#total-price').text((basePrice + urgentFee).toFixed(2));
-                            $('#total-price-wrapper').show();
-                        }
-                    }
-                });
+            if (degreeId && changeType) {
+                fetchDegreePrice(degreeId, changeType);
             } else {
                 $('#price-display').hide();
                 basePrice = 0;
             }
         });
+
+        // Function to fetch degree price based on degree_id and change_type
+        function fetchDegreePrice(degreeId, changeType) {
+            $.ajax({
+                type: "POST",
+                url: "{{ route('getDegreePrice') }}",
+                data: {
+                    degree_id: degreeId,
+                    change_type: changeType,
+                    _token: "{{ csrf_token() }}"
+                },
+                dataType: 'json',
+                success: function(response) {
+                    basePrice = parseFloat(response.price) || 0;
+                    $('#base-price').text(basePrice.toFixed(2));
+                    $('#price-display').show();
+
+                    // Only show total price if urgent mode is checked
+                    if ($('#urgent_mode').is(':checked')) {
+                        $('#total-price').text((basePrice + urgentFee).toFixed(2));
+                        $('#total-price-wrapper').show();
+                    } else {
+                        $('#total-price-wrapper').hide();
+                    }
+                },
+                error: function() {
+                    console.log('Error fetching degree price');
+                    $('#price-display').hide();
+                    basePrice = 0;
+                }
+            });
+        }
     });
 </script>
 
