@@ -194,59 +194,7 @@
                                 <span>Application Online Certificate</span>
                             </a>
                         </li>
-                        <li
-                            class="nav-item nav-item-submenu {{ Request::is('frontwebuser/web*') ? 'nav-item-open' : '' }}">
-                            <a href="#!" class="nav-link">
-                                <i class="fas fa-globe"></i>
-                                <span class="pcoded-micon"></span>
-                                <span class="pcoded-mtext">{{ trans_choice('module_front_web', 2) }}</span>
-                            </a>
-                            <ul class="nav nav-group-sub" data-submenu-title="Layouts"
-                                style="{{ Request::is('frontwebuser/web/topbar-setting*') || Request::is('frontwebuser/web/social-setting*') || Request::is('frontwebuser/web/slider*') || Request::is('frontwebuser/web/about-us*') || Request::is('frontwebuser/web/feature*') || Request::is('frontwebuser/web/web-event*') || Request::is('frontwebuser/web/news*') || Request::is('frontwebuser/web/faq*') || Request::is('frontwebuser/web/gallery*') || Request::is('frontwebuser/web/testimonial*') || Request::is('frontwebuser/web/page*') || Request::is('frontwebuser/web/call-to-action*') || Request::is('frontwebuser/web/team*') ? 'display:block' : '' }}">
-                                <li class="nav-item"><a href="{{ route('frontwebuser.topbar-setting.index') }}"
-                                        class="nav-link {{ Request::is('frontwebuser/web/topbar-setting') ? 'active' : '' }}">{{ trans_choice('module_topbar_setting', 1) }}</a>
-                                </li>
-                                <li class="nav-item"><a href="{{ route('frontwebuser.social-setting.index') }}"
-                                        class="nav-link {{ Request::is('frontwebuser/web/social-setting') ? 'active' : '' }}">{{ trans_choice('module_social_setting', 1) }}</a>
-                                </li>
-                                <li class="nav-item"><a href="{{ route('frontwebuser.slider.index') }}"
-                                        class="nav-link {{ Request::is('frontwebuser/web/slider') ? 'active' : '' }}">{{ trans_choice('module_slider', 2) }}</a>
-                                </li>
-                                <li class="nav-item"><a href="{{ route('frontwebuser.about-us.index') }}"
-                                        class="nav-link {{ Request::is('frontwebuser/web/about-us') ? 'active' : '' }}">{{ trans_choice('module_about_us', 1) }}</a>
-                                </li>
-                                <li class="nav-item"><a href="{{ route('frontwebuser.feature.index') }}"
-                                        class="nav-link {{ Request::is('frontwebuser/web/feature') ? 'active' : '' }}">{{ trans_choice('module_feature', 2) }}</a>
-                                </li>
-                                <li class="nav-item"><a href="{{ route('frontwebuser.web-event.index') }}"
-                                        class="nav-link {{ Request::is('frontwebuser/web/web-event') ? 'active' : '' }}">{{ trans_choice('module_event', 2) }}</a>
-                                </li>
-                                <li class="nav-item"><a href="{{ route('frontwebuser.Team.list') }}"
-                                        class="nav-link {{ Request::is('frontwebuser/web/team/list') ? 'active' : '' }}">{{ trans_choice('Team', 2) }}</a>
-                                </li>
-                                <li class="nav-item"><a href="{{ route('frontwebuser.news.index') }}"
-                                        class="nav-link {{ Request::is('frontwebuser/web/news') ? 'active' : '' }}">{{ trans_choice('module_news', 2) }}</a>
-                                </li>
-                                <li class="nav-item"><a href="{{ route('frontwebuser.faq.index') }}"
-                                        class="nav-link {{ Request::is('frontwebuser/web/faq') ? 'active' : '' }}">{{ trans_choice('module_faq', 2) }}</a>
-                                </li>
-                                <li class="nav-item"><a href="{{ route('frontwebuser.gallery.index') }}"
-                                        class="nav-link {{ Request::is('frontwebuser/web/gallery') ? 'active' : '' }}">{{ trans_choice('module_gallery', 2) }}</a>
-                                </li>
-                                <li class="nav-item"><a href="{{ route('frontwebuser.testimonial.index') }}"
-                                        class="nav-link {{ Request::is('frontwebuser/web/testimonial') ? 'active' : '' }}">{{ trans_choice('module_testimonial', 2) }}</a>
-                                </li>
-                                <li class="nav-item"><a href="{{ route('frontwebuser.page.index') }}"
-                                        class="nav-link {{ Request::is('frontwebuser/web/page') ? 'active' : '' }}">Pages</a>
-                                </li>
-                                <li class="nav-item"><a href="{{ route('frontwebuser.call-to-action.index') }}"
-                                        class="nav-link {{ Request::is('frontwebuser/web/call-to-action') ? 'active' : '' }}">{{ trans_choice('module_call_to_action', 1) }}</a>
-                                </li>
-                                <li class="nav-item"><a href="{{ route('frontwebuser.menu.index') }}"
-                                        class="nav-link {{ Request::is('frontwebuser/web/menu') ? 'active' : '' }}">Menu</a>
-                                </li>
-                            </ul>
-                        </li>
+                        
                     </ul>
                 </div>
                 <!-- /main navigation -->
