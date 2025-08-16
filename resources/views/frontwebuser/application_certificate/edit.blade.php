@@ -1,4 +1,4 @@
-@extends('admin.layout.index')
+@extends('frontwebuser.layout.index')
 
 @section('title')
     Application For Online Certificate
@@ -10,7 +10,7 @@
             <h5 class="card-title">Edit Certificate</h5>
         </div>
         <div class="col-lg-12">
-            <form action="{{ route('admin.certificateUpdate') }}" method="post" enctype="multipart/form-data">
+            <form action="{{ route('frontwebuser.certificateUpdate') }}" method="post" enctype="multipart/form-data">
                 @csrf
                 <div class="row">
                     <input type="hidden" name="id" value="{{ $certificate->id }}">

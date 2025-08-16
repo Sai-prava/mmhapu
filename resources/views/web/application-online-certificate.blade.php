@@ -459,7 +459,15 @@
                             </div>
 
 
-                            <div id="document-id-div"></div>
+                            <div id="document-id-div" style="display: none; margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;">
+                                <!-- Documents will be loaded here dynamically -->
+                            </div>
+                            <!-- Debug button (remove in production) -->
+                            <div style="margin-top: 10px;">
+                                <button type="button" id="debug-btn" style="display: none;">
+                                   
+                                </button>
+                            </div>
 
                             <div class="form-group">
                                 <label for="College/Dept"
@@ -719,154 +727,181 @@
     
 <script>
     $(document).ready(function() {
-        $('#certificates-options').hide();
-        $('#certificate-select').on('change', function() {
-            var certificateType = $(this).val();
-            $('#certificates-options').show();
-            $.ajax({
-                type: "POST",
-                url: "{{ route('getCertificate') }}",
-                data: {
-                    certificateType: certificateType,
-                    _token: "{{ csrf_token() }}"
-                },
-                dataType: 'json',
-                success: function(response) {
-                    $('#document-id-div').empty();
-                    $('#degree_certificate').empty();
-                    $('#degree_certificate').html('<option value="">Select</option>');
-                    $.each(response, function(key, value) {
-                        $('#degree_certificate').append('<option value="' + value
-                            .degree +
-                            '">' + value.degree + '</option>');
-                    });
-                },
-            });
-        });
-
-        $('#degree_certificate').on('change', function() {
-            var certificateType = $('#certificate-select').val();
-            var certificate = $('#degree_certificate').val();
-
-            $.ajax({
-                type: "POST",
-                url: '{{ route('getDocument') }}',
-                data: {
-                    'certificateType': certificateType,
-                    'certificate': certificate,
-                    _token: "{{ csrf_token() }}"
-                },
-                dataType: 'json',
-                success: function(response) {
-                    $('#document-id-div')
-                        .empty(); // Clear the div before appending new elements
-                    $.each(response, function(key, value) {
-                        $.ajax({
-                            type: "POST",
-                            url: '{{ route('getDocumentName') }}',
-                            data: {
-                                'id': value,
-                                _token: "{{ csrf_token() }}"
-                            },
-                            dataType: 'json',
-                            success: function(response) {
-                                $('#document-id-div').append(
-                                    '<div class="mb-3">' +
-                                    '<label class="form-label">' +
-                                    response.name +
-                                    ':</label>' +
-                                    '<input type="file" name="document_file[]" class="form-control" accept=".pdf" required>' +
-                                    '<input type="hidden" name="document_id[]" value="' +
-                                    response.id + '">' +
-                                    '<div class="invalid-feedback">Please upload a valid PDF file.</div>' +
-                                    '</div>'
-                                );
-
-                                $('input[name="document_file[]"]').on(
-                                    'invalid',
-                                    function() {
-                                        $(this).addClass(
-                                            'is-invalid'
-                                        );
-                                    });
-
-                                $('input[name="document_file[]"]').on(
-                                    'input',
-                                    function() {
-                                        if ($(this).val()) {
-                                            $(this).removeClass(
-                                                'is-invalid'
-                                            );
-                                        }
-                                    });
-
-                                $('#document-id-div').show();
-                            },
-                        });
-                    });
-                },
-            });
-        });
-
-        $(document).on('change', '#courseCategory', function() {
-
-            var course_category = $(this).val();
-            $.ajax({
-                type: "POST",
-                url: '{{ route('getcourse') }}',
-                data: {
-                    'course_category': course_category,
-                    _token: "{{ csrf_token() }}"
-                },
-                dataType: 'json',
-                success: function(response) {
-                    $('#courses').empty();
-                    $('#courses').html('<option value="">Select</option>');
-                    $.each(response, function(key, value) {
-                        $('#courses').append('<option value="' + value.name +
-                            '">' + value.name + '</option>');
-                    });
-                    $('#sessions').html(
-                        '<option value="">Select Session</option>');
-                },
-            });
-        });
-
-        $(document).on('change', '#courses', function() {
-
-            var course = $(this).val();
-            $.ajax({
-                type: "POST",
-                url: '{{ route('getsession') }}',
-                data: {
-                    'course': course,
-                    _token: "{{ csrf_token() }}"
-                },
-                dataType: 'json',
-                success: function(response) {
-                    $('#sessions').empty();
-                    $('#sessions').html('<option value="">Select</option>');
-                    $.each(response, function(key, value) {
-                        $('#sessions').append('<option value="' + value.session +
-                            '">' + value.session + '</option>');
-                    });
-                },
-            });
-        });
-    });
-</script>
-<script>
-    $(document).ready(function() {
+        // Initialize variables
         let basePrice = 0;
         let urgentFee = parseFloat("{{ $urgent_mode->amount }}");
+        
+        // Hide certificates options initially
+        $('#certificates-options').hide();
+        $('#document-id-div').hide();
+        
+        // Debug: Log when document is ready
+        console.log('Document ready, initializing application form...');
+        console.log('jQuery version:', $.fn.jquery);
+        console.log('Document ID div exists:', $('#document-id-div').length > 0);
+        
+        // Show debug button in development (remove in production)
+        $('#debug-btn').show();
+        
+        // Debug button click handler
+        $('#debug-btn').on('click', function() {
+            console.log('Debug button clicked');
+            console.log('Certificate select value:', $('#certificate-select').val());
+            console.log('Degree ID value:', $('#degree_id').val());
+            
+            // Manually trigger document loading if both values are set
+            if ($('#certificate-select').val() && $('#degree_id').val()) {
+                $('#degree_id').trigger('change');
+            } else {
+                alert('Please select both Certificate Type and Degree first');
+            }
+        });
+        
+        // Certificate type change handler
+        $('#certificate-select').on('change', function() {
+            var certificateType = $(this).val();
+            console.log('Certificate type changed:', certificateType);
+            
+            if (certificateType) {
+                $('#certificates-options').show();
+                $('#document-id-div').empty().hide();
+                
+                $.ajax({
+                    type: "POST",
+                    url: "{{ route('getCertificate') }}",
+                    data: {
+                        certificateType: certificateType,
+                        _token: "{{ csrf_token() }}"
+                    },
+                    dataType: 'json',
+                                    success: function(response) {
+                    console.log('Certificate response:', response);
+                    $('#degree_id').empty();
+                    $('#degree_id').html('<option value="">Select</option>');
+                    
+                    if (response && response.length > 0) {
+                        $.each(response, function(key, value) {
+                            $('#degree_id').append('<option value="' + value.degree + '">' + value.degree + '</option>');
+                        });
+                        console.log('Loaded', response.length, 'degrees');
+                    } else {
+                        console.log('No degrees found for certificate type:', certificateType);
+                        $('#degree_id').html('<option value="">No degrees available</option>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching certificates:', error);
+                    console.error('Status:', status);
+                    console.error('Response:', xhr.responseText);
+                    $('#degree_id').html('<option value="">Error loading degrees</option>');
+                }
+                });
+            } else {
+                $('#certificates-options').hide();
+                $('#document-id-div').empty().hide();
+            }
+            
+            // Reset price display
+            $('#price-display').hide();
+            basePrice = 0;
+        });
 
-        // When urgent mode checkbox is toggled
+        // Degree change handler
+        $('#degree_id').on('change', function() {
+            var certificateType = $('#certificate-select').val();
+            var certificate = $(this).val();
+            
+            console.log('Degree changed:', certificate);
+            console.log('Certificate type:', certificateType);
+
+            if (certificate && certificateType) {
+                // Fetch documents for this degree and certificate type
+                $.ajax({
+                    type: "POST",
+                    url: '{{ route('getDocument') }}',
+                    data: {
+                        'certificateType': certificateType,
+                        'certificate': certificate,
+                        _token: "{{ csrf_token() }}"
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        console.log('Documents response:', response);
+                        $('#document-id-div').empty();
+                        
+                        if (response && response.length > 0) {
+                            $.each(response, function(key, value) {
+                                $.ajax({
+                                    type: "POST",
+                                    url: '{{ route('getDocumentName') }}',
+                                    data: {
+                                        'id': value,
+                                        _token: "{{ csrf_token() }}"
+                                    },
+                                    dataType: 'json',
+                                    success: function(response) {
+                                        if (response && response.name) {
+                                            $('#document-id-div').append(
+                                                '<div class="mb-3">' +
+                                                '<label class="form-label">' +
+                                                response.name +
+                                                ':</label>' +
+                                                '<input type="file" name="document_file[]" class="form-control" accept=".pdf" required>' +
+                                                '<input type="hidden" name="document_id[]" value="' +
+                                                response.id + '">' +
+                                                '<div class="invalid-feedback">Please upload a valid PDF file.</div>' +
+                                                '</div>'
+                                            );
+
+                                            $('input[name="document_file[]"]').on(
+                                                'invalid',
+                                                function() {
+                                                    $(this).addClass('is-invalid');
+                                                });
+
+                                            $('input[name="document_file[]"]').on(
+                                                'input',
+                                                function() {
+                                                    if ($(this).val()) {
+                                                        $(this).removeClass('is-invalid');
+                                                    }
+                                                });
+
+                                            $('#document-id-div').show();
+                                        }
+                                    },
+                                    error: function(xhr, status, error) {
+                                        console.error('Error fetching document name:', error);
+                                    }
+                                });
+                            });
+                        } else {
+                            $('#document-id-div').hide();
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching documents:', error);
+                        $('#document-id-div').hide();
+                    }
+                });
+                
+                // Fetch degree price
+                fetchDegreePrice(certificate, certificateType);
+            } else {
+                $('#document-id-div').empty().hide();
+                $('#price-display').hide();
+                basePrice = 0;
+            }
+        });
+
+        // Urgent mode change handler
         $('#urgent_mode').on('change', function() {
             let urgent = this.checked ? 1 : 0;
+            console.log('Urgent mode changed:', urgent);
 
             $.ajax({
                 type: "POST",
-                url: "{{ route('getDegreesByUrgent') }}", // new route
+                url: "{{ route('getDegreesByUrgent') }}",
                 data: {
                     urgent: urgent,
                     _token: "{{ csrf_token() }}"
@@ -874,12 +909,10 @@
                 dataType: 'json',
                 success: function(response) {
                     let $degreeDropdown = $('#degree_id');
-                    $degreeDropdown.empty().append(
-                        '<option value="">-- Select Degree --</option>');
+                    $degreeDropdown.empty().append('<option value="">-- Select Degree --</option>');
 
                     $.each(response.degrees, function(index, degree) {
-                        $degreeDropdown.append('<option value="' + degree.id +
-                            '">' + degree.name + '</option>');
+                        $degreeDropdown.append('<option value="' + degree.id + '">' + degree.name + '</option>');
                     });
 
                     $('#urgent_amount_text').toggle(urgent === 1);
@@ -894,29 +927,47 @@
             });
         });
 
-        // When change type changes, reset price and fetch new price if degree is selected
-        $('#certificate-select').on('change', function() {
-            $('#price-display').hide();
-            basePrice = 0;
-            
-            // If degree is already selected, fetch new price for this change type
-            let degreeId = $('#degree_id').val();
-            if (degreeId) {
-                fetchDegreePrice(degreeId, $(this).val());
-            }
+        // Course category change handler
+        $(document).on('change', '#courseCategory', function() {
+            var course_category = $(this).val();
+            $.ajax({
+                type: "POST",
+                url: '{{ route('getcourse') }}',
+                data: {
+                    'course_category': course_category,
+                    _token: "{{ csrf_token() }}"
+                },
+                dataType: 'json',
+                success: function(response) {
+                    $('#courses').empty();
+                    $('#courses').html('<option value="">Select</option>');
+                    $.each(response, function(key, value) {
+                        $('#courses').append('<option value="' + value.name + '">' + value.name + '</option>');
+                    });
+                    $('#sessions').html('<option value="">Select Session</option>');
+                },
+            });
         });
 
-        // When degree is selected, fetch its price based on change type
-        $('#degree_id').on('change', function() {
-            let degreeId = $(this).val();
-            let changeType = $('#certificate-select').val();
-
-            if (degreeId && changeType) {
-                fetchDegreePrice(degreeId, changeType);
-            } else {
-                $('#price-display').hide();
-                basePrice = 0;
-            }
+        // Course change handler
+        $(document).on('change', '#courses', function() {
+            var course = $(this).val();
+            $.ajax({
+                type: "POST",
+                url: '{{ route('getsession') }}',
+                data: {
+                    'course': course,
+                    _token: "{{ csrf_token() }}"
+                },
+                dataType: 'json',
+                success: function(response) {
+                    $('#sessions').empty();
+                    $('#sessions').html('<option value="">Select</option>');
+                    $.each(response, function(key, value) {
+                        $('#sessions').append('<option value="' + value.session + '">' + value.session + '</option>');
+                    });
+                },
+            });
         });
 
         // Function to fetch degree price based on degree_id and change_type
@@ -952,6 +1003,7 @@
         }
     });
 </script>
+
 
 <script>
     $(document).ready(function() {

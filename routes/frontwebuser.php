@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Frontwebuser\ApplicationCertificateController;
 use App\Http\Controllers\Frontwebuser\DashboardController;
 use App\Http\Controllers\Frontwebuser\AuthController;
 use Illuminate\Support\Facades\Route;
@@ -24,10 +25,18 @@ use App\Http\Controllers\Frontwebuser\Web\MenuController;
 
 
 
-Route::group(['prefix' => 'frontwebuser', 'as'=>'frontwebuser.','middleware' => 'auth:user','frontwebuser'], function () {
+Route::group(['prefix' => 'frontwebuser', 'as' => 'frontwebuser.', 'middleware' => 'auth:user', 'frontwebuser'], function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
-
+  //Application for Online Certificate
+  Route::get('/certificate_view', [ApplicationCertificateController::class, 'certificateView'])->name('certificateView');
+  Route::post('/certificate-data', [ApplicationCertificateController::class, 'getCertificatesData'])
+      ->name('getCertificatesData');
+  Route::get('/certificate_edit/{id}', [ApplicationCertificateController::class, 'certificateEdit'])->name('certificateEdit');
+  Route::post('/certificate_update', [ApplicationCertificateController::class, 'certificateUpdate'])->name('certificateUpdate');
+  Route::get('/application_delete/{id}', [ApplicationCertificateController::class, 'applicationDelete'])->name('applicationDelete');
+  Route::post('/get_payment', [ApplicationCertificateController::class, 'getPayment'])->name('getPayment');
+  Route::get('/admin/filter-certificates', [ApplicationCertificateController::class, 'filterCertificates'])->name('filterCertificates');
     Route::prefix('web')->group(function () {
         Route::resource('menu', MenuController::class);
         Route::resource('slider', SliderController::class);
@@ -37,12 +46,12 @@ Route::group(['prefix' => 'frontwebuser', 'as'=>'frontwebuser.','middleware' => 
         Route::resource('web-event', WebEventController::class);
 
         //team
-        Route::get('/team/list',[TeamController::class,'list'])->name('Team.list');
-        Route::get('/team/add',[TeamController::class,'add'])->name('Team.add');
-        Route::post('/team/add',[TeamController::class,'store'])->name('Team.store');
-        Route::get('/team/edit{id}',[TeamController::class,'edit'])->name('Team.edit');
-        Route::post('/team/update',[TeamController::class,'update'])->name('Team.update');
-        Route::get('/team/delete{id}',[TeamController::class,'delete'])->name('Team.delete');
+        Route::get('/team/list', [TeamController::class, 'list'])->name('Team.list');
+        Route::get('/team/add', [TeamController::class, 'add'])->name('Team.add');
+        Route::post('/team/add', [TeamController::class, 'store'])->name('Team.store');
+        Route::get('/team/edit{id}', [TeamController::class, 'edit'])->name('Team.edit');
+        Route::post('/team/update', [TeamController::class, 'update'])->name('Team.update');
+        Route::get('/team/delete{id}', [TeamController::class, 'delete'])->name('Team.delete');
 
         Route::resource('news', NewsController::class);
         Route::resource('gallery', GalleryController::class);
@@ -52,7 +61,6 @@ Route::group(['prefix' => 'frontwebuser', 'as'=>'frontwebuser.','middleware' => 
         Route::resource('call-to-action', CallToActionController::class);
         Route::resource('social-setting', SocialSettingController::class);
         Route::resource('topbar-setting', TopbarSettingController::class);
+      
     });
 });
-
-?>

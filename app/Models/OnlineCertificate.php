@@ -17,7 +17,7 @@ class OnlineCertificate extends Model
         return $this->belongsTo(Degree::class, 'certificate', 'id');
     }
 
-    // public function getCourseCategory(){
-    //     return $this->belongsTo(CourseCategory::class, 'course_category_id');
-    // }
+    public function getCourseCategory(){
+        return $this->belongsTo(CourseCategory::class, 'course_category_id');
+    }
 }

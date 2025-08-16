@@ -232,6 +232,7 @@ class StudentSectionController extends Controller
     {
         $update = OnlineCertificate::find($request->id);
         $update->certificate_status = $request->certificate_status;
+        $update->urgent_mode = $request->urgent_mode;
         $update->save();
         toastr()->success('Certificate Updated Successfully');
         return redirect()->route('admin.certificateView');
@@ -397,7 +398,7 @@ class StudentSectionController extends Controller
 
     public function getDocument(Request $request)
     {
-        $get_document = DegreeCertificate::where('degree', $request->certificate)->where('change_type', $request->certificateType)->first();
+        $get_document = DegreeCertificate::where('degree_id', $request->certificate)->where('change_type', $request->certificateType)->first();
         if (isset($get_document)) {
             $doc = json_decode($get_document->document_id);
         } else {
