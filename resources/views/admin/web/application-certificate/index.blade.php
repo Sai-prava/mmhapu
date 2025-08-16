@@ -56,7 +56,7 @@
                         <div class="header-elements ms-3">
                             <label for="payment_type">Payment Status:</label>
                             <select class="form-control" id="payment_type">
-                                <option value="">Choose</option>
+                                <option value="">All</option>
                                 <option value="completed">Completed</option>
                                 <option value="pending">Pending</option>
                             </select>
@@ -80,16 +80,21 @@
                                     <tr>
                                         <th>#</th>
                                         <th>Name</th>
+                                        <th>Request No.</th>
+                                         <th>Request for</th>
+                                          <th>Applied Certificate</th>
+                                          <th>Payment Status</th>
+                                          <th>Urgent Mode</th>
                                         <th>Registration No.</th>
                                         <th>Roll No.</th>
                                         <th>Course.</th>
                                         <th>Session</th>
-                                        <th>Request No.</th>
-                                        <th>Request for</th>
-                                        <th>Applied Certificate</th>
-                                        <th>Urgent Mode</th>
+                                        
+                                       
+                                       
+                                        
                                         <th>Date of Application</th>
-                                        <th>Payment Status</th>
+                                        
                                         <th>Transaction Number</th>
                                         <th>Transaction Date</th>
                                         <th>Payment Method</th>
@@ -111,7 +116,7 @@
 <script>
 $(document).ready(function() {
     const table = $('#payment_table').DataTable({
-        processing: true,
+        processing: false,
         serverSide: true,
         responsive: true,
         dom: 'Bfrtip',
@@ -139,16 +144,21 @@ $(document).ready(function() {
         columns: [
             { data: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'name', name: 'name' },
+            { data: 'request_id', name: 'request_id' },
+             { data: 'change_type', name: 'change_type' },
+             { data: 'degree_name', name: 'degree_name' }, 
+              { data: 'payment_status', orderable: false, searchable: false },
+              { data: 'urgent_mode_status', name: 'urgent_mode_status', orderable: false, searchable: false },
             { data: 'reg_no', name: 'reg_no' },
             { data: 'roll_no', name: 'roll_no' },
             { data: 'course', name: 'course' },
             { data: 'session', name: 'session' },
-            { data: 'request_id', name: 'request_id' },
-            { data: 'change_type', name: 'change_type' },
-            { data: 'degree_name', name: 'degree_name' }, // Changed from 'certificate' to 'degree_name'
-            { data: 'urgent_mode_status', name: 'urgent_mode_status', orderable: false, searchable: false },
+            
+           
+            // Changed from 'certificate' to 'degree_name'
+            
             { data: 'created_at_formatted', name: 'created_at' },
-            { data: 'payment_status', orderable: false, searchable: false },
+           
             { data: 'transaction_number', orderable: false, searchable: false },
             { data: 'transaction_date', orderable: false, searchable: false },
             { data: 'payment_method', orderable: false, searchable: false },
