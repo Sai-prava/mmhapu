@@ -191,7 +191,7 @@
                             <a href="{{ route('frontwebuser.certificateView') }}"
                                 class="nav-link {{ Request::is('frontwebuser/certificate_view') ? 'active' : '' }}">
                                 <i class="icon-home4"></i>
-                                <span>Application Online Certificate</span>
+                                <span>Applications</span>
                             </a>
                         </li>
                         
