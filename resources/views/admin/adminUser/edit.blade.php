@@ -113,10 +113,10 @@
                                                 change)</small></label>
                                         <input type="password" name="password" placeholder="Password" class="form-control">
                                     </div>
-                                    <div class="col-md-6">
+                                    {{-- <div class="col-md-6">
                                         <label>Upload profile image</label>
                                         <input type="file" class="form-input-styled" name="image" data-fouc>
-                                    </div>
+                                    </div> --}}
                                 </div>
                             </div>
                             <div class="form-group">

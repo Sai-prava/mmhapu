@@ -120,6 +120,11 @@
                                 {{ $certificate->certificate_status == 1 ? 'checked' : '' }}>
                             <label class="form-check-label" for="issued">Issued</label>
                         </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="certificate_status" value="2"
+                                {{ $certificate->certificate_status == 2 ? 'checked' : '' }}>
+                            <label class="form-check-label" for="ready">Ready</label>
+                        </div>
                        
                     </div>
                     <div class="col-lg-6 mb-3">

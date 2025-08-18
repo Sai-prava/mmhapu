@@ -247,6 +247,13 @@
                                 </li>
                             </ul>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ route('frontwebuser.profile.index') }}"
+                                class="nav-link {{ Request::is('frontwebuser/profile') ? 'active' : '' }}">
+                                <i class="icon-home4"></i>
+                                <span>Profile</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 <!-- /main navigation -->

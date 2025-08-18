@@ -253,6 +253,7 @@
                                                     <tr>
                                                         <th>Course</th>
                                                         <th>Certificate Type</th>
+                                                        <th>Certificate Status</th>
                                                         <th>Request For</th>
                                                         <th>Payment Status</th>
                                                         <th>Action</th>
@@ -1071,9 +1072,15 @@
                                 </div>` :
                                     '<span class="text-muted">Not Available</span>';
 
-                                let row = `<tr>                               
+                                // Map certificate status: 0 -> Pending, 1 -> Issued, 2 -> Ready
+                                let certificateStatusText = (cert.certificate_status === 1)
+                                    ? 'Issued'
+                                    : ((cert.certificate_status === 2) ? 'Ready' : 'Pending');
+
+                                let row = `<tr>
                                 <td>${cert.course}</td>
                                 <td>${cert.degree ? cert.degree.name : 'N/A'}</td>
+                                <td>${certificateStatusText}</td>
                                 <td>${cert.change_type}</td>
                                 <td>${paymentStatus}</td>
                                 <td>${actionButton}</td>

@@ -83,7 +83,11 @@ class ApplicationCertificateController extends Controller
                 ->addColumn(
                     'certificate_status_text',
                     fn($row) =>
-                    $row->certificate_status == 0 ? 'Pending' : 'Issued'
+                    ($row->certificate_status == 0
+                        ? 'Pending'
+                        : ($row->certificate_status == 1
+                            ? 'Issued'
+                            : ($row->certificate_status == 2 ? 'Ready' : 'Unknown')))
                 )
                 ->addColumn('action', function ($row) {
                     $editUrl = route('frontwebuser.certificateEdit', $row->id);

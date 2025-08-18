@@ -202,6 +202,13 @@
                                 <span>Dashboard</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.AdminUser.list') }}"
+                                class="nav-link {{ Request::is('admin/adminuser/list') ? 'active' : '' }}">
+                                <i class="icon-home4"></i>
+                                <span>User List</span>
+                            </a>
+                        </li> 
 
                         <li
                             class="nav-item nav-item-submenu {{ Request::is('admin/web/student_grievance*') || Request::is('admin/web/social-setting') || Request::is('admin/web/topbar-setting') || Request::is('admin/web/slider') || Request::is('admin/web/overview*') || Request::is('admin/web/student*') || Request::is('admin/web/administration*') || Request::is('admin/web/campus*') || Request::is('admin/web/team/list') || Request::is('admin/web/web-event') || Request::is('admin/web/gallery') || Request::is('admin/web/galleries*') || Request::is('admin/web/committe_title*') || Request::is('admin/web/committe*') || Request::is('admin/web/study_material*') || Request::is('admin/web/calender*') ? 'nav-item-open' : '' }}">

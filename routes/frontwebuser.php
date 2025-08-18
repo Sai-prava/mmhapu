@@ -3,6 +3,7 @@
 use App\Http\Controllers\Frontwebuser\ApplicationCertificateController;
 use App\Http\Controllers\Frontwebuser\DashboardController;
 use App\Http\Controllers\Frontwebuser\AuthController;
+use App\Http\Controllers\Frontwebuser\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Frontwebuser\Web\TopbarSettingController;
 use App\Http\Controllers\Frontwebuser\Web\SocialSettingController;
@@ -63,4 +64,7 @@ Route::group(['prefix' => 'frontwebuser', 'as' => 'frontwebuser.', 'middleware' 
         Route::resource('topbar-setting', TopbarSettingController::class);
       
     });
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
+    Route::post('/profile/password/update', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+
 });
