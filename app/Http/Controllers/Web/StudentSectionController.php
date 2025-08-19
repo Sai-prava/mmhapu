@@ -153,6 +153,11 @@ class StudentSectionController extends Controller
                 $query->where('online_certificates.urgent_mode', $request->urgent_mode);
             }
 
+            // Certificate status filter
+            if ($request->filled('certificate_status')) {
+                $query->where('online_certificates.certificate_status', $request->certificate_status);
+            }
+
             return DataTables::eloquent($query)
                 ->addIndexColumn()
                 ->addColumn(
@@ -198,12 +203,18 @@ class StudentSectionController extends Controller
                 )
                 ->addColumn(
                     'certificate_status_text',
-                    fn($row) =>
-                    ($row->certificate_status == 0
-                        ? 'Pending'
-                        : ($row->certificate_status == 1
-                            ? 'Issued'
-                            : ($row->certificate_status == 2 ? 'Ready' : 'Unknown')))
+                    function($row) {
+                        switch($row->certificate_status) {
+                            case 0:
+                                return '<span class="badge bg-warning">Pending</span>';
+                            case 1:
+                                return '<span class="badge bg-success">Issued</span>';
+                            case 2:
+                                return '<span class="badge bg-info">Ready</span>';
+                            default:
+                                return '<span class="badge bg-secondary">Unknown</span>';
+                        }
+                    }
                 )
                 ->addColumn('action', function ($row) {
                     $editUrl = route('admin.certificateEdit', $row->id);
@@ -214,7 +225,7 @@ class StudentSectionController extends Controller
                     <button type="button" class="btn btn-danger btn-sm delete-btn" data-url="' . $deleteUrl . '">Delete</button>
                 ';
                 })
-                ->rawColumns(['payment_status', 'urgent_mode_status', 'action'])
+                ->rawColumns(['payment_status', 'urgent_mode_status', 'certificate_status_text', 'action'])
                 ->make(true);
         } catch (\Exception $e) {
             \Log::error('DataTables error: ' . $e->getMessage());
