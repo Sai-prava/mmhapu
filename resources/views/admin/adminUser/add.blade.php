@@ -22,6 +22,15 @@
                         <input type="email" class="form-control" name="email" placeholder="Enter Email" required>
                     </div>
                     <div class="col-lg-12 mb-3">
+                        <label for="role_id" class="form-label">Role<span style="color: red">*</span></label>
+                        <select class="form-control" name="role_id" required>
+                            <option value="">Select Role</option>
+                            @foreach($roles as $role)
+                                <option value="{{ $role->id }}">{{ $role->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-lg-12 mb-3">
                         <label for="image" class="form-label">Image</label>
                         <input type="file" class="form-control" name="image">
                     </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Intervention\Image\Facades\Image;
@@ -16,17 +17,18 @@ class AdminUserController extends Controller
         return view('admin.adminUser.list',compact('all_adminuser'));
     }
     public function add(){
-        return view('admin.adminUser.add');
+        $roles = Role::all();
+        return view('admin.adminUser.add', compact('roles'));
     }
     public function store(Request $request){
         $store_adminuser = new User;
         $store_adminuser->name = $request->name;
         $store_adminuser->email = $request->email;
-        $store_adminuser->role_id =6;
+        $store_adminuser->role_id = $request->role_id;
         if($request->hasFile('image')){
         $store_adminuser->image = $request->image;
         }
-        $store_adminuser->password =$request->password;
+        $store_adminuser->password = $request->password;
         $store_adminuser->save();
         toastr()->success('Admin User Added Successfully!');
         return redirect()->route('admin.AdminUser.list');
