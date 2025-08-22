@@ -572,10 +572,14 @@
                             </a>
 
                             <ul class="nav nav-group-sub" data-submenu-title="Layouts"
-                                style="{{ Request::is('admin/web/degree_certificate*') || Request::is('admin/web/certificate_view*') || Request::is('admin/web/session*') || Request::is('admin/web/course*')  || Request::is('admin/web/certificate_name*') || Request::is('admin/web/document*') || Request::is('admin/web/course_category*') || Request::is('admin/web/urgentmodeIndex*') ? 'display:block' : '' }}">
+                                style="{{ Request::is('admin/web/degree_certificate*') || Request::is('admin/web/certificate_view*') || Request::is('admin/web/old_certificate_view*') || Request::is('admin/web/session*') || Request::is('admin/web/course*')  || Request::is('admin/web/certificate_name*') || Request::is('admin/web/document*') || Request::is('admin/web/course_category*') || Request::is('admin/web/urgentmodeIndex*') ? 'display:block' : '' }}">
 
                                 <li class="nav-item"><a href="{{ route('admin.certificateView') }}"
                                         class="nav-link {{ Request::is('admin/web/certificate_view*') ? 'active' : '' }}">Application
+                                        Online Certificate</a>
+                                </li>
+                                <li class="nav-item"><a href="{{ route('admin.oldCertificateView') }}"
+                                        class="nav-link {{ Request::is('admin/web/old_certificate_view*') ? 'active' : '' }}">Old Application
                                         Online Certificate</a>
                                 </li>
                                 <li class="nav-item"><a href="{{ route('admin.certificate.index') }}"

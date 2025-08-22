@@ -750,8 +750,11 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => 'auth:user'
 
         //Application for Online Certificate
         Route::get('/certificate_view', [WebStudentSectionController::class, 'certificateView'])->name('certificateView');
+        Route::get('/old_certificate_view', [WebStudentSectionController::class, 'oldCertificateView'])->name('oldCertificateView');
         Route::post('/certificate-data', [WebStudentSectionController::class, 'getCertificatesData'])
             ->name('getCertificatesData');
+        Route::post('/old-certificate-data', [WebStudentSectionController::class, 'oldGetCertificatesData'])
+            ->name('oldGetCertificatesData');
         Route::get('/certificate_edit/{id}', [WebStudentSectionController::class, 'certificateEdit'])->name('certificateEdit');
         Route::post('/certificate_update', [WebStudentSectionController::class, 'certificateUpdate'])->name('certificateUpdate');
         Route::get('/application_delete/{id}', [WebStudentSectionController::class, 'applicationDelete'])->name('applicationDelete');

@@ -131,6 +131,11 @@ class StudentSectionController extends Controller
     {
         return view('admin.web.application-certificate.index');
     }
+
+    public function oldCertificateView()
+    {
+        return view('admin.web.application-certificate.old_index');
+    }
     public function getCertificatesData(Request $request)
     {
         try {
@@ -203,8 +208,8 @@ class StudentSectionController extends Controller
                 )
                 ->addColumn(
                     'certificate_status_text',
-                    function($row) {
-                        switch($row->certificate_status) {
+                    function ($row) {
+                        switch ($row->certificate_status) {
                             case 0:
                                 return '<span class="badge bg-warning">Pending</span>';
                             case 1:
@@ -237,6 +242,111 @@ class StudentSectionController extends Controller
         }
     }
 
+    public function oldGetCertificatesData(Request $request) {
+        try {
+            $query = OnlineCertificate::with(['getPayment', 'degree']);
+
+            // Date filter
+            if ($request->filled('from_date') && $request->filled('to_date')) {
+                $from = Carbon::createFromFormat('Y-m-d', $request->from_date)->startOfDay();
+                $to   = Carbon::createFromFormat('Y-m-d', $request->to_date)->endOfDay();
+                $query->whereBetween('online_certificates.created_at', [$from, $to]);
+            }
+
+            // Payment filter
+            if ($request->filled('payment_type')) {
+                $query->where('online_certificates.payment', $request->payment_type);
+            }
+
+            // Urgent mode filter
+            if ($request->filled('urgent_mode')) {
+                $query->where('online_certificates.urgent_mode', $request->urgent_mode);
+            }
+
+            // Certificate status filter
+            if ($request->filled('certificate_status')) {
+                $query->where('online_certificates.certificate_status', $request->certificate_status);
+            }
+
+            return DataTables::eloquent($query)
+                ->addIndexColumn()
+                ->addColumn(
+                    'certificate',
+                    fn($row) => $row->certificate ?? 'N/A'
+                )
+                ->addColumn(
+                    'urgent_mode_status',
+                    function ($row) {
+                        if ($row->urgent_mode == 1) {
+                            return '<span class="badge bg-warning">Urgent</span>';
+                        } else {
+                            return '<span class="badge bg-secondary">Normal</span>';
+                        }
+                    }
+                )
+                ->addColumn(
+                    'created_at_formatted',
+                    fn($row) =>
+                    $row->created_at ? $row->created_at->format('d/m/Y') : ''
+                )
+                ->addColumn(
+                    'payment_status',
+                    fn($row) =>
+                    $row->payment === 'completed'
+                        ? '<span class="badge bg-success">Completed</span>'
+                        : '<span class="badge bg-danger">Pending</span>'
+                )
+                ->addColumn(
+                    'transaction_number',
+                    fn($row) =>
+                    optional($row->getPayment)->transaction_number ?? 'N/A'
+                )
+                ->addColumn(
+                    'transaction_date',
+                    fn($row) =>
+                    optional($row->getPayment)->transation_date ?? 'N/A'
+                )
+                ->addColumn(
+                    'payment_method',
+                    fn($row) =>
+                    optional($row->getPayment)->method ?? 'N/A'
+                )
+                ->addColumn(
+                    'certificate_status_text',
+                    function ($row) {
+                        switch ($row->certificate_status) {
+                            case 0:
+                                return '<span class="badge bg-warning">Pending</span>';
+                            case 1:
+                                return '<span class="badge bg-success">Issued</span>';
+                            case 2:
+                                return '<span class="badge bg-info">Ready</span>';
+                            default:
+                                return '<span class="badge bg-secondary">Unknown</span>';
+                        }
+                    }
+                )
+                ->addColumn('action', function ($row) {
+                    $editUrl = route('admin.certificateEdit', $row->id);
+                    $deleteUrl = route('admin.applicationDelete', $row->id);
+
+                    return '
+                    <a href="' . $editUrl . '" class="btn btn-primary btn-sm">Edit</a>
+                    <button type="button" class="btn btn-danger btn-sm delete-btn" data-url="' . $deleteUrl . '">Delete</button>
+                ';
+                })
+                ->rawColumns(['payment_status', 'urgent_mode_status', 'certificate_status_text', 'action'])
+                ->make(true);
+        } catch (\Exception $e) {
+            \Log::error('DataTables error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            return response()->json([
+                'error' => 'An error occurred while processing the request: ' . $e->getMessage()
+            ], 500);
+        }
+
+    }
     public function certificateEdit($id)
     {
         $certificate = OnlineCertificate::find($id);
@@ -360,15 +470,15 @@ class StudentSectionController extends Controller
         }
 
         $payment = $receipt->getPayment;
-        
+
         // Calculate total amount including urgent fee
         $baseAmount = $payment ? $payment->amount : 0;
         $urgentFee = $payment ? $payment->urgent_fee : 0;
         $totalAmount = $baseAmount + $urgentFee;
-        
+
         // Determine request type based on urgent mode
         $requestType = $receipt->urgent_mode == 1 ? 'Urgent Mode' : 'Normal Mode';
-        
+
         $data = [
             'name' => $receipt->name,
             'request_id' => $receipt->request_id,
