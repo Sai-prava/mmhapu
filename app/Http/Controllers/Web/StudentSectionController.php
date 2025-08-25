@@ -140,7 +140,7 @@ class StudentSectionController extends Controller
     public function getCertificatesData(Request $request)
     {
         try {
-            $query = OnlineCertificate::with(['getPayment', 'degree']);
+            $query = OnlineCertificate::with(['getPayment', 'degree'])->whereRaw("certificate REGEXP '^[0-9]+$'");
 
             // Date filter
             if ($request->filled('from_date') && $request->filled('to_date')) {
@@ -243,9 +243,11 @@ class StudentSectionController extends Controller
         }
     }
 
-    public function oldGetCertificatesData(Request $request) {
+    public function oldGetCertificatesData(Request $request)
+    {
         try {
-            $query = OnlineCertificate::with(['getPayment', 'degree']);
+            $query = OnlineCertificate::with(['getPayment', 'degree'])
+                ->whereRaw("NOT (certificate REGEXP '^[0-9]+$')"); // only old string certificates
 
             // Date filter
             if ($request->filled('from_date') && $request->filled('to_date')) {
@@ -271,25 +273,13 @@ class StudentSectionController extends Controller
 
             return DataTables::eloquent($query)
                 ->addIndexColumn()
-                ->addColumn(
-                    'certificate',
-                    fn($row) => $row->certificate ?? 'N/A'
-                )
-                ->addColumn(
-                    'urgent_mode_status',
-                    function ($row) {
-                        if ($row->urgent_mode == 1) {
-                            return '<span class="badge bg-warning">Urgent</span>';
-                        } else {
-                            return '<span class="badge bg-secondary">Normal</span>';
-                        }
-                    }
-                )
-                ->addColumn(
-                    'created_at_formatted',
-                    fn($row) =>
-                    $row->created_at ? $row->created_at->format('d/m/Y') : ''
-                )
+                ->addColumn('certificate', fn($row) => $row->certificate ?? 'N/A')
+                ->addColumn('urgent_mode_status', function ($row) {
+                    return $row->urgent_mode == 1
+                        ? '<span class="badge bg-warning">Urgent</span>'
+                        : '<span class="badge bg-secondary">Normal</span>';
+                })
+                ->addColumn('created_at_formatted', fn($row) => $row->created_at ? $row->created_at->format('d/m/Y') : '')
                 ->addColumn(
                     'payment_status',
                     fn($row) =>
@@ -297,44 +287,29 @@ class StudentSectionController extends Controller
                         ? '<span class="badge bg-success">Completed</span>'
                         : '<span class="badge bg-danger">Pending</span>'
                 )
-                ->addColumn(
-                    'transaction_number',
-                    fn($row) =>
-                    optional($row->getPayment)->transaction_number ?? 'N/A'
-                )
-                ->addColumn(
-                    'transaction_date',
-                    fn($row) =>
-                    optional($row->getPayment)->transation_date ?? 'N/A'
-                )
-                ->addColumn(
-                    'payment_method',
-                    fn($row) =>
-                    optional($row->getPayment)->method ?? 'N/A'
-                )
-                ->addColumn(
-                    'certificate_status_text',
-                    function ($row) {
-                        switch ($row->certificate_status) {
-                            case 0:
-                                return '<span class="badge bg-warning">Pending</span>';
-                            case 1:
-                                return '<span class="badge bg-success">Issued</span>';
-                            case 2:
-                                return '<span class="badge bg-info">Ready</span>';
-                            default:
-                                return '<span class="badge bg-secondary">Unknown</span>';
-                        }
+                ->addColumn('transaction_number', fn($row) => optional($row->getPayment)->transaction_number ?? 'N/A')
+                ->addColumn('transaction_date', fn($row) => optional($row->getPayment)->transation_date ?? 'N/A')
+                ->addColumn('payment_method', fn($row) => optional($row->getPayment)->method ?? 'N/A')
+                ->addColumn('certificate_status_text', function ($row) {
+                    switch ($row->certificate_status) {
+                        case 0:
+                            return '<span class="badge bg-warning">Pending</span>';
+                        case 1:
+                            return '<span class="badge bg-success">Issued</span>';
+                        case 2:
+                            return '<span class="badge bg-info">Ready</span>';
+                        default:
+                            return '<span class="badge bg-secondary">Unknown</span>';
                     }
-                )
+                })
                 ->addColumn('action', function ($row) {
                     $editUrl = route('admin.certificateEdit', $row->id);
                     $deleteUrl = route('admin.applicationDelete', $row->id);
 
                     return '
-                    <a href="' . $editUrl . '" class="btn btn-primary btn-sm">Edit</a>
-                    <button type="button" class="btn btn-danger btn-sm delete-btn" data-url="' . $deleteUrl . '">Delete</button>
-                ';
+                        <a href="' . $editUrl . '" class="btn btn-primary btn-sm">Edit</a>
+                        <button type="button" class="btn btn-danger btn-sm delete-btn" data-url="' . $deleteUrl . '">Delete</button>
+                    ';
                 })
                 ->rawColumns(['payment_status', 'urgent_mode_status', 'certificate_status_text', 'action'])
                 ->make(true);
@@ -346,8 +321,8 @@ class StudentSectionController extends Controller
                 'error' => 'An error occurred while processing the request: ' . $e->getMessage()
             ], 500);
         }
-
     }
+
     public function certificateEdit($id)
     {
         $certificate = OnlineCertificate::find($id);
@@ -469,30 +444,30 @@ class StudentSectionController extends Controller
         if (!$receipt) {
             abort(404, 'Receipt not found');
         }
-    
+
         $payment = $receipt->getPayment;
-    
+
         // Base & Urgent
         $baseAmount = $payment ? $payment->amount : 0;
         $urgentFee = $payment ? $payment->urgent_fee : 0;
-    
+
         // 🔑 Always refetch from Razorpay
         $key_id = 'rzp_live_undbzXL0KAgXPc';
         $secret = 'HJtUPAoPeyzQUUTFs6CwuNKI';
         $api = new Api($key_id, $secret);
-    
+
         $freshResponse = [];
         $razorpayFee = 0;
         if ($payment && $payment->transaction_number) {
             $freshResponse = $api->payment->fetch($payment->transaction_number)->toArray();
             $razorpayFee = isset($freshResponse['fee']) ? $freshResponse['fee'] / 100 : 0; // convert paise to INR
         }
-    
+
         // Total
         $totalAmount = $baseAmount + $urgentFee + $razorpayFee;
-    
+
         $requestType = $receipt->urgent_mode == 1 ? 'Urgent Mode' : 'Normal Mode';
-    
+
         $data = [
             'name' => $receipt->name,
             'request_id' => $receipt->request_id,
@@ -518,14 +493,14 @@ class StudentSectionController extends Controller
             'request_type' => $requestType,
             'currency' => $payment ? $payment->currency : '',
         ];
-    
+
         $pdf = FacadePdf::loadView('web.receipt', $data);
         return $pdf->download('payment_receipt.pdf');
     }
-    
-    
-    
-    
+
+
+
+
 
 
     public function filterCertificates(Request $request)
