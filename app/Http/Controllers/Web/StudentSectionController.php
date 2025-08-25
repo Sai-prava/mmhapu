@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use PDF;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
+use Razorpay\Api\Api;
 
 class StudentSectionController extends Controller
 {
@@ -468,17 +469,30 @@ class StudentSectionController extends Controller
         if (!$receipt) {
             abort(404, 'Receipt not found');
         }
-
+    
         $payment = $receipt->getPayment;
-
-        // Calculate total amount including urgent fee
+    
+        // Base & Urgent
         $baseAmount = $payment ? $payment->amount : 0;
         $urgentFee = $payment ? $payment->urgent_fee : 0;
-        $totalAmount = $baseAmount + $urgentFee;
-
-        // Determine request type based on urgent mode
+    
+        // 🔑 Always refetch from Razorpay
+        $key_id = 'rzp_live_undbzXL0KAgXPc';
+        $secret = 'HJtUPAoPeyzQUUTFs6CwuNKI';
+        $api = new Api($key_id, $secret);
+    
+        $freshResponse = [];
+        $razorpayFee = 0;
+        if ($payment && $payment->transaction_number) {
+            $freshResponse = $api->payment->fetch($payment->transaction_number)->toArray();
+            $razorpayFee = isset($freshResponse['fee']) ? $freshResponse['fee'] / 100 : 0; // convert paise to INR
+        }
+    
+        // Total
+        $totalAmount = $baseAmount + $urgentFee + $razorpayFee;
+    
         $requestType = $receipt->urgent_mode == 1 ? 'Urgent Mode' : 'Normal Mode';
-
+    
         $data = [
             'name' => $receipt->name,
             'request_id' => $receipt->request_id,
@@ -497,17 +511,21 @@ class StudentSectionController extends Controller
             'created_at' => Carbon::parse($receipt->created_at)->format('jS F Y'),
             'method' => $payment ? $payment->method : 'N/A',
             'transaction_number' => $payment ? $payment->transaction_number : 'N/A',
-            'amount' => $payment ? $payment->amount : 'N/A',
+            'amount' => $baseAmount,
             'urgent_fee' => $urgentFee,
+            'razorpay_fee' => $razorpayFee,
             'total_amount' => $totalAmount,
             'request_type' => $requestType,
             'currency' => $payment ? $payment->currency : '',
         ];
-
+    
         $pdf = FacadePdf::loadView('web.receipt', $data);
-
         return $pdf->download('payment_receipt.pdf');
     }
+    
+    
+    
+    
 
 
     public function filterCertificates(Request $request)

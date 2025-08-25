@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Status of Document Request</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,7 +14,6 @@
         table {
             border: 1px solid #000;
             width: 100%;
-            /* border-collapse: collapse; */
             margin-bottom: 20px;
         }
 
@@ -32,36 +30,12 @@
             margin-bottom: 10px;
         }
 
-        .note {
-            font-size: 14px;
-            margin-top: 10px;
-        }
-
-        .download-btn {
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        button {
-            background-color: #007BFF;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-        
         .urgent-mode {
             background-color: #fff3cd !important;
             color: #856404 !important;
             font-weight: bold !important;
         }
-        
+
         .amount-highlight {
             background-color: #d4edda !important;
             color: #155724 !important;
@@ -105,7 +79,7 @@
             </tr>
             <tr>
                 <th>Course:</th>
-                <td> {{ $course }} </td>
+                <td>{{ $course }}</td>
                 <th>Session:</th>
                 <td>{{ $session }}</td>
             </tr>
@@ -117,7 +91,14 @@
             </tr>
             <tr>
                 <th>Urgent Fee:</th>
-                <td class="{{ $urgent_fee > 0 ? 'urgent-mode' : '' }}">{{ $urgent_fee > 0 ? $urgent_fee . ' ' . $currency : 'N/A' }}</td>
+                <td class="{{ $urgent_fee > 0 ? 'urgent-mode' : '' }}">
+                    {{ $urgent_fee > 0 ? $urgent_fee . ' ' . $currency : 'N/A' }}
+                </td>
+                <th>Transaction Fee:</th>
+                <td>{{ $razorpay_fee }} {{ $currency }}</td>
+            </tr>
+            <tr>
+                <th colspan="2"></th>
                 <th>Total Amount:</th>
                 <td class="amount-highlight">{{ $total_amount }} {{ $currency }}</td>
             </tr>
@@ -141,7 +122,6 @@
             </tr>
         </table>
     </div>
-
 </body>
 
 </html>
