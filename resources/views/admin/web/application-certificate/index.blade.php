@@ -61,6 +61,13 @@
                                 </div>
                                 <div class="me-3 align-self-end">
                                     <button class="btn btn-primary" id="filter_button">Filter</button>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-success" id="export_csv">CSV</button>
+                                        <button class="btn btn-success" id="export_excel">Excel</button>
+                                        <button class="btn btn-success" id="export_pdf">PDF</button>
+                                        <button class="btn btn-secondary" id="export_copy">Copy</button>
+                                        <button class="btn btn-secondary" id="export_print">Print</button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="header-elements ms-3">
@@ -132,11 +139,10 @@
     <script>
         $(document).ready(function() {
             const table = $('#payment_table').DataTable({
-                processing: false,
+                processing: true,
                 serverSide: true,
                 responsive: true,
-                dom: 'Bfrtip',
-                buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+                dom: 'frtip',
                 ajax: {
                     url: "{{ route('admin.getCertificatesData') }}",
                     type: 'POST',
@@ -158,7 +164,7 @@
                     }
                 },
                 order: [
-                    [9, 'desc']
+                    [0, 'asc']
                 ],
                 columns: [{
                         data: 'DT_RowIndex',
@@ -259,6 +265,38 @@
 
             $('#certificate_status').on('change', function() {
                 table.ajax.reload();
+            });
+
+            function exportWith(format) {
+                const params = new URLSearchParams({
+                    from_date: $('#from_date').val() || '',
+                    to_date: $('#to_date').val() || '',
+                    payment_type: $('#payment_type').val() || '',
+                    urgent_mode: $('#urgent_mode').val() || '',
+                    certificate_status: $('#certificate_status').val() || ''
+                });
+                window.location.href = "{{ route('admin.exportCertificates', ['format' => 'csv']) }}".replace('csv', format) + '?' + params.toString();
+            }
+            $('#export_csv').on('click', function() { exportWith('csv'); });
+            $('#export_excel').on('click', function() { exportWith('excel'); });
+            $('#export_pdf').on('click', function() { exportWith('pdf'); });
+            $('#export_print').on('click', function() { exportWith('print'); });
+            $('#export_copy').on('click', async function() {
+                const url = "{{ route('admin.exportCertificates', ['format' => 'csv']) }}" + '?' + new URLSearchParams({
+                    from_date: $('#from_date').val() || '',
+                    to_date: $('#to_date').val() || '',
+                    payment_type: $('#payment_type').val() || '',
+                    urgent_mode: $('#urgent_mode').val() || '',
+                    certificate_status: $('#certificate_status').val() || ''
+                }).toString();
+                try {
+                    const res = await fetch(url, { credentials: 'include' });
+                    const text = await res.text();
+                    await navigator.clipboard.writeText(text);
+                    alert('Copied filtered data to clipboard (CSV).');
+                } catch (err) {
+                    alert('Copy failed. Please try again.');
+                }
             });
 
             // Update summary counts when table data changes

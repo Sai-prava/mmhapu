@@ -19,6 +19,8 @@ use PDF;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Razorpay\Api\Api;
+use App\Exports\CertificatesExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class StudentSectionController extends Controller
 {
@@ -598,5 +600,162 @@ class StudentSectionController extends Controller
             ->get(['id', 'name']);
 
         return response()->json($degrees);
+    }
+
+    public function exportCertificates(Request $request, $format = 'csv')
+    {
+        $query = OnlineCertificate::with(['getPayment', 'degree'])
+            ->whereRaw("certificate REGEXP '^[0-9]+$'");
+
+        if ($request->filled('from_date') && $request->filled('to_date')) {
+            $from = \Carbon\Carbon::createFromFormat('Y-m-d', $request->from_date)->startOfDay();
+            $to   = \Carbon\Carbon::createFromFormat('Y-m-d', $request->to_date)->endOfDay();
+            $query->whereBetween('online_certificates.created_at', [$from, $to]);
+        }
+        if ($request->filled('payment_type')) {
+            $query->where('online_certificates.payment', $request->payment_type);
+        }
+        if ($request->filled('urgent_mode')) {
+            $query->where('online_certificates.urgent_mode', $request->urgent_mode);
+        }
+        if ($request->filled('certificate_status')) {
+            $query->where('online_certificates.certificate_status', $request->certificate_status);
+        }
+
+        $certificates = $query->get();
+
+        if ($format === 'csv') {
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="certificates.csv"',
+            ];
+            $callback = function() use ($certificates) {
+                $out = fopen('php://output', 'w');
+                fputcsv($out, [
+                    'Name', 'Request No', 'Request For', 'Applied Certificate', 'Payment Status',
+                    'Urgent Mode', 'Certificate Status', 'Registration No', 'Roll No', 'Course',
+                    'Session', 'Date of Application', 'Transaction Number', 'Transaction Date', 'Payment Method'
+                ]);
+                foreach ($certificates as $row) {
+                    fputcsv($out, [
+                        $row->name,
+                        $row->request_id,
+                        $row->change_type,
+                        optional($row->degree)->name,
+                        $row->payment === 'completed' ? 'Completed' : 'Pending',
+                        $row->urgent_mode ? 'Urgent' : 'Normal',
+                        match($row->certificate_status) { 0 => 'Pending', 1 => 'Issued', 2 => 'Ready', default => 'Unknown' },
+                        $row->reg_no,
+                        $row->roll_no,
+                        $row->course,
+                        $row->session,
+                        optional($row->created_at)?->format('d/m/Y'),
+                        optional($row->getPayment)->transaction_number,
+                        optional($row->getPayment)->transation_date,
+                        optional($row->getPayment)->method,
+                    ]);
+                }
+                fclose($out);
+            };
+            return response()->stream($callback, 200, $headers);
+        }
+
+        if ($format === 'excel') {
+            return Excel::download(new CertificatesExport($certificates), 'certificates.xlsx');
+        }
+
+        if ($format === 'pdf') {
+            $html = view('admin.web.application-certificate.export_table', compact('certificates'))->render();
+            $pdf = FacadePdf::loadHTML($html)->setPaper('a4', 'landscape');
+            return $pdf->download('certificates.pdf');
+        }
+
+        if ($format === 'print') {
+            $html = view('admin.web.application-certificate.export_table', compact('certificates'))->render();
+            return response($html);
+        }
+
+        abort(400, 'Invalid format');
+    }
+
+    public function exportOldCertificates(Request $request, $format = 'csv')
+    {
+        $query = OnlineCertificate::with(['getPayment'])
+            ->whereRaw("NOT (certificate REGEXP '^[0-9]+$')");
+
+        if ($request->filled('from_date') && $request->filled('to_date')) {
+            $from = \Carbon\Carbon::createFromFormat('Y-m-d', $request->from_date)->startOfDay();
+            $to   = \Carbon\Carbon::createFromFormat('Y-m-d', $request->to_date)->endOfDay();
+            $query->whereBetween('online_certificates.created_at', [$from, $to]);
+        }
+        if ($request->filled('payment_type')) {
+            $query->where('online_certificates.payment', $request->payment_type);
+        }
+        if ($request->filled('urgent_mode')) {
+            $query->where('online_certificates.urgent_mode', $request->urgent_mode);
+        }
+        if ($request->filled('certificate_status')) {
+            $query->where('online_certificates.certificate_status', $request->certificate_status);
+        }
+
+        $certificates = $query->get();
+
+        if ($format === 'csv') {
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="old_certificates.csv"',
+            ];
+            $callback = function() use ($certificates) {
+                $out = fopen('php://output', 'w');
+                fputcsv($out, [
+                    'Name', 'Request No', 'Request For', 'Certificate', 'Payment Status',
+                    'Urgent Mode', 'Certificate Status', 'Registration No', 'Roll No', 'Course',
+                    'Session', 'Date of Application', 'Transaction Number', 'Transaction Date', 'Payment Method'
+                ]);
+                foreach ($certificates as $row) {
+                    fputcsv($out, [
+                        $row->name,
+                        $row->request_id,
+                        $row->change_type,
+                        $row->certificate,
+                        $row->payment === 'completed' ? 'Completed' : 'Pending',
+                        $row->urgent_mode ? 'Urgent' : 'Normal',
+                        match($row->certificate_status) { 0 => 'Pending', 1 => 'Issued', 2 => 'Ready', default => 'Unknown' },
+                        $row->reg_no,
+                        $row->roll_no,
+                        $row->course,
+                        $row->session,
+                        optional($row->created_at)?->format('d/m/Y'),
+                        optional($row->getPayment)->transaction_number,
+                        optional($row->getPayment)->transation_date,
+                        optional($row->getPayment)->method,
+                    ]);
+                }
+                fclose($out);
+            };
+            return response()->stream($callback, 200, $headers);
+        }
+
+        if ($format === 'excel') {
+            return Excel::download(new CertificatesExport($certificates), 'old_certificates.xlsx');
+        }
+
+        if ($format === 'pdf') {
+            $html = view('admin.web.application-certificate.export_table', compact('certificates'))->render();
+            $pdf = FacadePdf::loadHTML($html)
+                ->setPaper('a4', 'landscape')
+                ->setOptions([
+                    'isRemoteEnabled' => true,
+                    'isHtml5ParserEnabled' => true,
+                ]);
+            return $pdf->download('old_certificates.pdf');
+        }
+
+        if ($format === 'print') {
+            $html = view('admin.web.application-certificate.export_table', compact('certificates'))->render();
+            return response($html);
+        }
+
+        abort(400, 'Invalid format');
     }
 }

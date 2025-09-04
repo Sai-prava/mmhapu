@@ -692,7 +692,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => 'auth:user'
         //degree certificate
         Route::get('/degree_certificate', [StudentsectionController::class, 'index'])->name('certificate.index');
         Route::get('/degree_add', [StudentsectionController::class, 'certificateAdd'])->name('certificate.add');
-       
+
 
         Route::post('/certificate_store', [StudentsectionController::class, 'certificateStore'])->name('certificate.store');
         Route::get('/degree_edit/{id}', [StudentsectionController::class, 'certificateEdit'])->name('certificate.edit');
@@ -704,12 +704,12 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => 'auth:user'
         Route::post('/urgent_mode/store', [StudentsectionController::class, 'urgentmodeStore'])->name('urgentmodeStore');
 
         //certificate name
-         Route::get('/certificate_name', [StudentsectionController::class, 'certificateName'])->name('certificateName');
-         Route::get('/certificate_name/add', [StudentsectionController::class, 'certificateNameAdd'])->name('certificateNameAdd');
-         Route::post('/certificate_name/store', [StudentsectionController::class, 'certificateNameStore'])->name('certificateNameStore');
-         Route::get('/certificate_name/edit/{id}', [StudentsectionController::class, 'certificateNameEdit'])->name('certificateNameEdit');
-         Route::post('/certificate_name/update', [StudentsectionController::class, 'certificateNameUpdate'])->name('certificateNameUpdate');
-         Route::get('/certificate_name/delete/{id}', [StudentsectionController::class, 'certificateNameDelete'])->name('certificateNameDelete');
+        Route::get('/certificate_name', [StudentsectionController::class, 'certificateName'])->name('certificateName');
+        Route::get('/certificate_name/add', [StudentsectionController::class, 'certificateNameAdd'])->name('certificateNameAdd');
+        Route::post('/certificate_name/store', [StudentsectionController::class, 'certificateNameStore'])->name('certificateNameStore');
+        Route::get('/certificate_name/edit/{id}', [StudentsectionController::class, 'certificateNameEdit'])->name('certificateNameEdit');
+        Route::post('/certificate_name/update', [StudentsectionController::class, 'certificateNameUpdate'])->name('certificateNameUpdate');
+        Route::get('/certificate_name/delete/{id}', [StudentsectionController::class, 'certificateNameDelete'])->name('certificateNameDelete');
         //Session
         Route::get('/session', [StudentsectionController::class, 'session'])->name('session.index');
         Route::post('/session_store', [StudentsectionController::class, 'sessionStore'])->name('session.store');
@@ -753,6 +753,14 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => 'auth:user'
         Route::get('/old_certificate_view', [WebStudentSectionController::class, 'oldCertificateView'])->name('oldCertificateView');
         Route::post('/certificate-data', [WebStudentSectionController::class, 'getCertificatesData'])
             ->name('getCertificatesData');
+        Route::get('/export-certificates/{format}', [WebStudentSectionController::class, 'exportCertificates'])
+            ->where('format', 'csv|excel|pdf|print')
+            ->name('exportCertificates');
+
+        Route::get('/export-old-certificates/{format}', [WebStudentSectionController::class, 'exportOldCertificates'])
+            ->where('format', 'csv|excel|pdf|print')
+            ->name('exportOldCertificates');
+
         Route::post('/old-certificate-data', [WebStudentSectionController::class, 'oldGetCertificatesData'])
             ->name('oldGetCertificatesData');
         Route::get('/certificate_edit/{id}', [WebStudentSectionController::class, 'certificateEdit'])->name('certificateEdit');
