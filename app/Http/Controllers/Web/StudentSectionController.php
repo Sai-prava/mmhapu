@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Razorpay\Api\Api;
 use App\Exports\CertificatesExport;
+use App\Exports\CertificatesExportOld;
 use Maatwebsite\Excel\Facades\Excel;
 
 class StudentSectionController extends Controller
@@ -737,25 +738,45 @@ class StudentSectionController extends Controller
         }
 
         if ($format === 'excel') {
-            return Excel::download(new CertificatesExport($certificates), 'old_certificates.xlsx');
+            return Excel::download(new CertificatesExportOld($certificates), 'old_certificates.xlsx');
         }
 
         if ($format === 'pdf') {
-            $html = view('admin.web.application-certificate.export_table', compact('certificates'))->render();
-            $pdf = FacadePdf::loadHTML($html)
-                ->setPaper('a4', 'landscape')
-                ->setOptions([
-                    'isRemoteEnabled' => true,
-                    'isHtml5ParserEnabled' => true,
-                ]);
-            return $pdf->download('old_certificates.pdf');
+            try {
+                if ($certificates->isEmpty()) {
+                    return response()->json(['error' => 'No certificates found for PDF export'], 404);
+                }
+
+                $html = view('admin.web.application-certificate.export_table_v2', compact('certificates'))->render();
+
+                if (!$html) {
+                    \Log::error('Export PDF: Rendered HTML is empty');
+                    return response()->json(['error' => 'Failed to render HTML for PDF'], 500);
+                }
+
+                $pdf = FacadePdf::loadHTML($html)
+                    ->setPaper('a4', 'landscape')
+                    ->setOptions([
+                        'isRemoteEnabled' => true,
+                        'isHtml5ParserEnabled' => true,
+                        'defaultFont' => 'DejaVu Sans',
+                        'isPhpEnabled' => true,
+                    ]);
+
+                return $pdf->download('old_certificates.pdf');
+            } catch (\Throwable $e) {
+                \Log::error('Export PDF failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+                return response()->json(['error' => 'PDF generation failed'], 500);
+            }
         }
 
         if ($format === 'print') {
-            $html = view('admin.web.application-certificate.export_table', compact('certificates'))->render();
+            $html = view('admin.web.application-certificate.export_table_v2', compact('certificates'))->render();
             return response($html);
         }
 
         abort(400, 'Invalid format');
     }
+
+  
 }

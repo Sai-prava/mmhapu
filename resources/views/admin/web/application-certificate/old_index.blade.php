@@ -64,7 +64,7 @@
                                     <div class="btn-group" role="group">
                                         <button class="btn btn-success" id="export_csv">CSV</button>
                                         <button class="btn btn-success" id="export_excel">Excel</button>
-                                        <button class="btn btn-success" id="export_pdf">PDF</button>
+                                        {{-- <button class="btn btn-success" id="export_pdf">PDF</button> --}}
                                         <button class="btn btn-secondary" id="export_copy">Copy</button>
                                         <button class="btn btn-secondary" id="export_print">Print</button>
                                     </div>
