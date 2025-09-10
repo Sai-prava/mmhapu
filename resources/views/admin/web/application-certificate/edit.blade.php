@@ -54,7 +54,8 @@
                     </div>
                     <div class="col-lg-6 mb-3">
                         <label for="course" class="form-label">Course Category</label>
-                        <input type="text" class="form-control" value="{{ $certificate->getCourseCategory->name ?? 'N/A' }}" disabled>
+                        <input type="text" class="form-control"
+                            value="{{ $certificate->getCourseCategory->name ?? 'N/A' }}" disabled>
                     </div>
                     <div class="col-lg-6 mb-3">
                         <label for="course" class="form-label">Course</label>
@@ -66,7 +67,13 @@
                     </div>
                     <div class="col-lg-6 mb-3">
                         <label for="course" class="form-label">Applied Certificate</label>
-                        <input type="text" class="form-control" value="{{ $certificate->degree->name ?? 'N/A' }}" disabled>
+                        <input type="text" class="form-control"
+                            value="@if (!empty($certificate->degree->name)) {{ $certificate->degree->name }}
+                                   @elseif(!empty($certificate->certificate))
+                                        {{ $certificate->certificate }}
+                                   @else
+                                        N/A @endif"
+                            disabled>
                     </div>
                     <div class="col-lg-6 mb-3">
                         <label for="intake" class="form-label">Date of Applied</label>
@@ -125,7 +132,7 @@
                                 {{ $certificate->certificate_status == 2 ? 'checked' : '' }}>
                             <label class="form-check-label" for="ready">Ready</label>
                         </div>
-                       
+
                     </div>
                     <div class="col-lg-6 mb-3">
                         <label class="form-label d-block">Urgent Mode Status</label>
@@ -139,7 +146,7 @@
                                 {{ $certificate->urgent_mode == 1 ? 'checked' : '' }}>
                             <label class="form-check-label" for="issued">Issued</label>
                         </div>
-                       
+
                     </div>
                 </div>
                 <div class="mb-3">

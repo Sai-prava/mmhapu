@@ -29,15 +29,26 @@ use App\Http\Controllers\Frontwebuser\Web\MenuController;
 Route::group(['prefix' => 'frontwebuser', 'as' => 'frontwebuser.', 'middleware' => 'auth:user', 'frontwebuser'], function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
-  //Application for Online Certificate
-  Route::get('/certificate_view', [ApplicationCertificateController::class, 'certificateView'])->name('certificateView');
-  Route::post('/certificate-data', [ApplicationCertificateController::class, 'getCertificatesData'])
-      ->name('getCertificatesData');
-  Route::get('/certificate_edit/{id}', [ApplicationCertificateController::class, 'certificateEdit'])->name('certificateEdit');
-  Route::post('/certificate_update', [ApplicationCertificateController::class, 'certificateUpdate'])->name('certificateUpdate');
-  Route::get('/application_delete/{id}', [ApplicationCertificateController::class, 'applicationDelete'])->name('applicationDelete');
-  Route::post('/get_payment', [ApplicationCertificateController::class, 'getPayment'])->name('getPayment');
-  Route::get('/admin/filter-certificates', [ApplicationCertificateController::class, 'filterCertificates'])->name('filterCertificates');
+    //Application for Online Certificate
+    Route::get('/certificate_view', [ApplicationCertificateController::class, 'certificateView'])->name('certificateView');
+    Route::post('/certificate-data', [ApplicationCertificateController::class, 'getCertificatesData'])
+        ->name('getCertificatesData');
+    Route::get('/certificate_edit/{id}', [ApplicationCertificateController::class, 'certificateEdit'])->name('certificateEdit');
+    Route::post('/certificate_update', [ApplicationCertificateController::class, 'certificateUpdate'])->name('certificateUpdate');
+    Route::get('/application_delete/{id}', [ApplicationCertificateController::class, 'applicationDelete'])->name('applicationDelete');
+    Route::post('/get_payment', [ApplicationCertificateController::class, 'getPayment'])->name('getPayment');
+    Route::get('/admin/filter-certificates', [ApplicationCertificateController::class, 'filterCertificates'])->name('filterCertificates');
+    Route::get('/old_certificate_view', [ApplicationCertificateController::class, 'oldCertificateView'])->name('oldCertificateView');
+    Route::post('/old-certificate-data', [ApplicationCertificateController::class, 'oldGetCertificatesData'])
+        ->name('oldGetCertificatesData');
+    Route::get('/export-certificates/{format}', [ApplicationCertificateController::class, 'exportCertificates'])
+        ->where('format', 'csv|excel|pdf|print')
+        ->name('exportCertificates');
+
+    Route::get('/export-old-certificates/{format}', [ApplicationCertificateController::class, 'exportOldCertificates'])
+        ->where('format', 'csv|excel|pdf|print')
+        ->name('exportOldCertificates');
+
     Route::prefix('web')->group(function () {
         Route::resource('menu', MenuController::class);
         Route::resource('slider', SliderController::class);
@@ -62,9 +73,7 @@ Route::group(['prefix' => 'frontwebuser', 'as' => 'frontwebuser.', 'middleware' 
         Route::resource('call-to-action', CallToActionController::class);
         Route::resource('social-setting', SocialSettingController::class);
         Route::resource('topbar-setting', TopbarSettingController::class);
-      
     });
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::post('/profile/password/update', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
-
 });

@@ -501,11 +501,6 @@ class StudentSectionController extends Controller
         return $pdf->download('payment_receipt.pdf');
     }
 
-
-
-
-
-
     public function filterCertificates(Request $request)
     {
         $fromDate = $request->from_date;

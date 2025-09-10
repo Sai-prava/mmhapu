@@ -191,10 +191,17 @@
                             <a href="{{ route('frontwebuser.certificateView') }}"
                                 class="nav-link {{ Request::is('frontwebuser/certificate_view') ? 'active' : '' }}">
                                 <i class="icon-home4"></i>
-                                <span>Applications</span>
+                                <span>New Online Applications</span>
                             </a>
                         </li>
-<<<<<<< HEAD
+                        <li class="nav-item">
+                            <a href="{{ route('frontwebuser.oldCertificateView') }}"
+                                class="nav-link {{ Request::is('frontwebuser/old_certificate_view') ? 'active' : '' }}">
+                                <i class="icon-home4"></i>
+                                <span>Old Online Applications</span>
+                            </a>
+                        </li>
+
                         <li
                             class="nav-item nav-item-submenu {{ Request::is('frontwebuser/web*') ? 'nav-item-open' : '' }}">
                             <a href="#!" class="nav-link">
@@ -255,9 +262,7 @@
                                 <span>Profile</span>
                             </a>
                         </li>
-=======
-                        
->>>>>>> 6d9ee8783f5336be40b5165dd652d454380f8a87
+
                     </ul>
                 </div>
                 <!-- /main navigation -->

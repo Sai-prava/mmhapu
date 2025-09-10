@@ -1,7 +1,7 @@
 @extends('frontwebuser.layout.index')
 
 @section('title')
-    Application Online Certificate
+   Old Application Online Certificate
 @endsection
 
 <style>
@@ -41,7 +41,7 @@
                 <div class="col-sm-12">
                     <div class="card">
                         <div class="card-header header-elements-inline">
-                            <h5 class="card-title">Application Online Certificate</h5>
+                            <h5 class="card-title">Old Application Online Certificate</h5>
                             <div class="header-elements d-flex flex-wrap">
                                 <div class="me-3">
                                     <label for="from_date">Date From:</label>
@@ -64,7 +64,7 @@
                                     <div class="btn-group" role="group">
                                         <button class="btn btn-success" id="export_csv">CSV</button>
                                         <button class="btn btn-success" id="export_excel">Excel</button>
-                                        <button class="btn btn-success" id="export_pdf">PDF</button>
+                                        {{-- <button class="btn btn-success" id="export_pdf">PDF</button> --}}
                                         <button class="btn btn-secondary" id="export_copy">Copy</button>
                                         <button class="btn btn-secondary" id="export_print">Print</button>
                                     </div>
@@ -144,7 +144,7 @@
                 responsive: true,
                 dom: 'frtip',
                 ajax: {
-                    url: "{{ route('frontwebuser.getCertificatesData') }}",
+                    url: "{{ route('frontwebuser.oldGetCertificatesData') }}",
                     type: 'POST',
                     data: function(d) {
                         d.from_date = $('#from_date').val();
@@ -184,8 +184,8 @@
                         name: 'change_type'
                     },
                     {
-                        data: 'degree_name',
-                        name: 'degree_name'
+                        data: 'certificate',
+                        name: 'certificate'
                     },
                     {
                         data: 'payment_status',
@@ -275,14 +275,14 @@
                     urgent_mode: $('#urgent_mode').val() || '',
                     certificate_status: $('#certificate_status').val() || ''
                 });
-                window.location.href = "{{ route('frontwebuser.exportCertificates', ['format' => 'csv']) }}".replace('csv', format) + '?' + params.toString();
+                window.location.href = "{{ route('frontwebuser.exportOldCertificates', ['format' => 'csv']) }}".replace('csv', format) + '?' + params.toString();
             }
             $('#export_csv').on('click', function() { exportWith('csv'); });
             $('#export_excel').on('click', function() { exportWith('excel'); });
             $('#export_pdf').on('click', function() { exportWith('pdf'); });
             $('#export_print').on('click', function() { exportWith('print'); });
             $('#export_copy').on('click', async function() {
-                const url = "{{ route('frontwebuser.exportCertificates', ['format' => 'csv']) }}" + '?' + new URLSearchParams({
+                const url = "{{ route('frontwebuser.exportOldCertificates', ['format' => 'csv']) }}" + '?' + new URLSearchParams({
                     from_date: $('#from_date').val() || '',
                     to_date: $('#to_date').val() || '',
                     payment_type: $('#payment_type').val() || '',
