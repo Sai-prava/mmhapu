@@ -22,6 +22,8 @@ use Razorpay\Api\Api;
 use App\Exports\CertificatesExport;
 use App\Exports\CertificatesExportOld;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Log;
+use Stichoza\GoogleTranslate\GoogleTranslate;
 
 class StudentSectionController extends Controller
 {
@@ -48,7 +50,10 @@ class StudentSectionController extends Controller
             'adhar_number' => 'required',
             'email' => 'required|email',
             'number' => 'required|numeric|digits:10',
-            'certificate' => 'required',
+            // Support multiple degrees; fallback to single 'certificate'
+            'degree_ids' => 'nullable|array',
+            'degree_ids.*' => 'integer',
+            'certificate' => 'nullable',
             'course' => 'required',
             'change_type' => 'required',
             'college' => 'required',
@@ -60,61 +65,137 @@ class StudentSectionController extends Controller
             'document_id' => 'nullable|array',
             'document_file.*' => 'nullable|file',
         ]);
-        // dd($request->document_id[2]);
+        // Determine selected degrees
+        $selectedDegreeIds = [];
+        if ($request->has('degree_ids') && is_array($request->degree_ids) && count($request->degree_ids) > 0) {
+            $selectedDegreeIds = array_values(array_filter($request->degree_ids));
+        } elseif (!empty($request->certificate)) {
+            $selectedDegreeIds = [$request->certificate];
+        }
 
-        $certificateStore = new OnlineCertificate();
+        if (count($selectedDegreeIds) === 0) {
+            return back()->withErrors(['degree_ids' => 'Please select at least one certificate/degree.']);
+        }
+
+        // Create a group request id
         $prefix = "N-";
-        $certificateStore->request_id = $prefix . mt_rand(10000, 99999);
+        $groupRequestId = $prefix . mt_rand(10000, 99999);
 
-        $certificateStore->reg_no = $request->reg_no;
-        $certificateStore->roll_no = $request->roll_no;
-        $certificateStore->name = $request->name;
-        $certificateStore->hindi_name = $request->hindi_name;
-        $certificateStore->father_name = $request->father_name;
-        $certificateStore->mother_name = $request->mother_name;
-        $certificateStore->adhar_number = $request->adhar_number;
-        $certificateStore->apaar_id = $request->apaar_id;
+        // Common payload
+        $common = [
+            'reg_no' => $request->reg_no,
+            'roll_no' => $request->roll_no,
+            'name' => $request->name,
+            'hindi_name' => $request->hindi_name,
+            'father_name' => $request->father_name,
+            'mother_name' => $request->mother_name,
+            'adhar_number' => $request->adhar_number,
+            'apaar_id' => $request->apaar_id,
+            'gender' => $request->gender,
+            'email' => $request->email,
+            'number' => $request->number,
+            'course_category_id' => $request->course_category_id,
+            'course' => $request->course,
+            'change_type' => $request->change_type,
+            'college' => $request->college,
+            'session' => $request->session,
+            'passing_year' => $request->passing_year,
+            'recive_degree' => $request->recive_degree,
+            'recive_mode' => $request->recive_mode,
+            'address' => $request->address,
+            'urgent_mode' => $request->urgent_mode ? 1 : 0,
+        ];
+
+        // Handle main document upload once
+        $documentName = null;
         if ($request->hasFile('document')) {
             $document = $request->file('document');
-            $document_name = $document->getClientOriginalName();
-            $document->move(public_path('uploads/certificates'), $document_name);
-            $certificateStore->document = $document_name;
+            $documentName = $document->getClientOriginalName();
+            $document->move(public_path('uploads/certificates'), $documentName);
         }
-        $certificateStore->gender = $request->gender;
-        $certificateStore->email = $request->email;
-        $certificateStore->number = $request->number;
-        $certificateStore->certificate = $request->certificate;
-        $certificateStore->course_category_id = $request->course_category_id;
-        $certificateStore->course = $request->course;
-        $certificateStore->change_type = $request->change_type;
-        $certificateStore->college = $request->college;
-        $certificateStore->session = $request->session;
-        $certificateStore->passing_year = $request->passing_year;
-        $certificateStore->recive_degree = $request->recive_degree;
-        $certificateStore->recive_mode = $request->recive_mode;
-        $certificateStore->address = $request->address;
-        $certificateStore->urgent_mode = $request->urgent_mode ? 1 : 0;
-        $certificateStore->save();
 
-        // Only process documents if document_id array exists and is not empty
+        // Create the first(primary) certificate
+        $primaryCertificate = new OnlineCertificate();
+        $primaryCertificate->reg_no = $common['reg_no'];
+        $primaryCertificate->roll_no = $common['roll_no'];
+        $primaryCertificate->name = $common['name'];
+        $primaryCertificate->hindi_name = $common['hindi_name'];
+        $primaryCertificate->father_name = $common['father_name'];
+        $primaryCertificate->mother_name = $common['mother_name'];
+        $primaryCertificate->adhar_number = $common['adhar_number'];
+        $primaryCertificate->apaar_id = $common['apaar_id'];
+        $primaryCertificate->gender = $common['gender'];
+        $primaryCertificate->email = $common['email'];
+        $primaryCertificate->number = $common['number'];
+        $primaryCertificate->course_category_id = $common['course_category_id'];
+        $primaryCertificate->course = $common['course'];
+        $primaryCertificate->change_type = $common['change_type'];
+        $primaryCertificate->college = $common['college'];
+        $primaryCertificate->session = $common['session'];
+        $primaryCertificate->passing_year = $common['passing_year'];
+        $primaryCertificate->recive_degree = $common['recive_degree'];
+        $primaryCertificate->recive_mode = $common['recive_mode'];
+        $primaryCertificate->address = $common['address'];
+        $primaryCertificate->urgent_mode = $common['urgent_mode'];
+        $primaryCertificate->request_id = $groupRequestId;
+        $primaryCertificate->certificate = $selectedDegreeIds[0];
+        if ($documentName) {
+            $primaryCertificate->document = $documentName;
+        }
+        $primaryCertificate->save();
+
+        // Create additional certificates for remaining selections
+        if (count($selectedDegreeIds) > 1) {
+            for ($i = 1; $i < count($selectedDegreeIds); $i++) {
+                $c = new OnlineCertificate();
+                $c->reg_no = $common['reg_no'];
+                $c->roll_no = $common['roll_no'];
+                $c->name = $common['name'];
+                $c->hindi_name = $common['hindi_name'];
+                $c->father_name = $common['father_name'];
+                $c->mother_name = $common['mother_name'];
+                $c->adhar_number = $common['adhar_number'];
+                $c->apaar_id = $common['apaar_id'];
+                $c->gender = $common['gender'];
+                $c->email = $common['email'];
+                $c->number = $common['number'];
+                $c->course_category_id = $common['course_category_id'];
+                $c->course = $common['course'];
+                $c->change_type = $common['change_type'];
+                $c->college = $common['college'];
+                $c->session = $common['session'];
+                $c->passing_year = $common['passing_year'];
+                $c->recive_degree = $common['recive_degree'];
+                $c->recive_mode = $common['recive_mode'];
+                $c->address = $common['address'];
+                $c->urgent_mode = $common['urgent_mode'];
+                $c->request_id = $groupRequestId;
+                $c->certificate = $selectedDegreeIds[$i];
+                if ($documentName) {
+                    $c->document = $documentName;
+                }
+                $c->save();
+            }
+        }
+
+        // Attach provided supporting documents to the primary certificate entry
         if ($request->has('document_id') && is_array($request->document_id) && count($request->document_id) > 0) {
             $count = count($request->document_id);
             for ($i = 0; $i < $count; $i++) {
                 $documents = new CertificateDocument();
-                $documents->certificate_id = $certificateStore->id;
+                $documents->certificate_id = $primaryCertificate->id;
                 $documents->document_id = $request->document_id[$i];
                 if ($request->hasFile("document_file.$i")) {
-                    $document = $request->file('document_file')[$i];
-                    $document_name = $document->getClientOriginalName(); // Add a unique prefix
-                    $document->move(public_path('uploads/certificate_documents'), $document_name);
-                    $documents->documents = $document_name;
+                    $docFile = $request->file('document_file')[$i];
+                    $uploadedName = $docFile->getClientOriginalName();
+                    $docFile->move(public_path('uploads/certificate_documents'), $uploadedName);
+                    $documents->documents = $uploadedName;
                 }
                 $documents->save();
             }
         }
 
-        $encryptedId = Crypt::encrypt($certificateStore->id);
-
+        $encryptedId = Crypt::encrypt($primaryCertificate->id);
         return redirect('/payment/' . $encryptedId);
     }
     public function translateName(Request $request)

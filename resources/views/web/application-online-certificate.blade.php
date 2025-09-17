@@ -424,6 +424,87 @@
                                     @enderror
                                 </div>
                             </div>
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function () {
+                                    const changeTypeEl = document.getElementById('certificate-select');
+                                    const degreeMulti = document.getElementById('degree_ids');
+                                    const hiddenCertificate = document.getElementById('certificate_hidden');
+                                    const urgentCheckbox = document.getElementById('urgent_mode');
+                                    const tableWrapper = document.getElementById('selected-certificates-wrapper');
+                                    const tableBody = document.querySelector('#selected-certificates-table tbody');
+                                    const totalBlock = document.getElementById('selected-total');
+                                    const totalValueEl = document.getElementById('selected-total-value');
+                                    const certificatesOptions = document.getElementById('certificates-options');
+
+                                    function syncHiddenField() {
+                                        const selected = Array.from(degreeMulti.selectedOptions).map(o => o.value);
+                                        hiddenCertificate.value = selected.length ? selected[0] : '';
+                                    }
+
+                                    async function fetchPrice(degreeId, changeType) {
+                                        try {
+                                            const res = await fetch("{{ route('getDegreePrice') }}", {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'X-CSRF-TOKEN': "{{ csrf_token() }}"
+                                                },
+                                                body: JSON.stringify({ degree_id: degreeId, change_type: changeType })
+                                            });
+                                            if (!res.ok) return 0;
+                                            const data = await res.json();
+                                            return Number(data.price || 0);
+                                        } catch (e) {
+                                            return 0;
+                                        }
+                                    }
+
+                                    async function renderSelectedTable() {
+                                        const changeType = changeTypeEl.value || '';
+                                        const selected = Array.from(degreeMulti.selectedOptions);
+                                        tableBody.innerHTML = '';
+                                        if (!selected.length) {
+                                            tableWrapper.style.display = 'none';
+                                            if (totalBlock) totalBlock.style.display = 'none';
+                                            return;
+                                        }
+                                        tableWrapper.style.display = '';
+                                        let total = 0;
+                                        for (const opt of selected) {
+                                            const degreeId = opt.value;
+                                            const degreeName = opt.dataset.name || opt.textContent;
+                                            const basePrice = changeType ? await fetchPrice(degreeId, changeType) : 0;
+                                            const price = urgentCheckbox.checked ? (Number(basePrice) + 100) : Number(basePrice);
+                                            total += price;
+
+                                            const tr = document.createElement('tr');
+                                            tr.innerHTML = `
+                                                <td>${degreeName}</td>
+                                                <td><span class="price" data-degree-id="${degreeId}">${price}</span></td>
+                                                <td>${urgentCheckbox.checked ? 'Yes' : 'No'}</td>
+                                            `;
+                                            tableBody.appendChild(tr);
+                                        }
+                                        if (totalBlock && totalValueEl) {
+                                            totalValueEl.textContent = total;
+                                            totalBlock.style.display = '';
+                                        }
+                                    }
+
+                                    function handleChange() {
+                                        syncHiddenField();
+                                        renderSelectedTable();
+                                        if (certificatesOptions) certificatesOptions.style.display = '';
+                                    }
+
+                                    changeTypeEl.addEventListener('change', handleChange);
+                                    degreeMulti.addEventListener('change', handleChange);
+                                    urgentCheckbox.addEventListener('change', renderSelectedTable);
+
+                                    // initial sync if needed
+                                    handleChange();
+                                });
+                            </script>
                             <div class="col-sm-12">
                                 <input type="checkbox" id="urgent_mode" name="urgent_mode" value="1">
                                 <label for="urgent_mode">Urgent Mode</label>
@@ -433,29 +514,52 @@
                                 </p>
                             </div>
                             <!-- Urgent mode checkbox -->
-                            <div id="price-display" style="margin-top: 10px; display:none;">
+                            {{-- <div id="price-display" style="margin-top: 10px; display:none;">
                                 <p>Base Price: ₹<span id="base-price">0</span></p>
                                 <p id="total-price-wrapper" style="display:none;">
                                     <strong>Total Price: ₹<span id="total-price">0</span></strong>
                                 </p>
-                            </div>
+                            </div> --}}
 
                             <div id="certificates-options" class="form-group" style="display: none;">
                                 <label for="degree-certificate" class="col-sm-6 col-form-label text-right">
                                     Degree<span>*</span>
                                 </label>
                                 <div class="col-sm-12">
-                                    <select name="certificate" id="degree_id" class="form-control">
-                                        <option value="">-- Select Degree --</option>
+                                    <!-- Multi-select for UI -->
+                                    <select id="degree_ids" name="degree_ids[]" class="form-control" multiple>
                                         @foreach ($degree as $deg)
-                                            <option value="{{ $deg->id }}" data-status="{{ $deg->status }}">
+                                            <option value="{{ $deg->id }}" data-status="{{ $deg->status }}" data-name="{{ $deg->name }}">
                                                 {{ $deg->name }}
                                             </option>
                                         @endforeach
                                     </select>
+                                    <!-- Hidden field to preserve backend expectation (first selected) -->
+                                    <input type="hidden" name="certificate" id="certificate_hidden" value="">
                                     @error('certificate')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
+                                </div>
+
+                                <!-- Dynamic table for selected certificates -->
+                                <div class="col-sm-12" style="margin-top:12px;">
+                                    <div id="selected-certificates-wrapper" style="display:none;">
+                                        <div style="overflow-x:auto;">
+                                            <table class="table table-bordered" id="selected-certificates-table" style="width:100%;">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="white-space:nowrap;">Certificate Name</th>
+                                                        <th style="white-space:nowrap;">Price (₹)</th>
+                                                        <th style="white-space:nowrap;">Urgent Mode</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                            <div id="selected-total" style="text-align:right; font-weight:bold; display:none;">
+                                                Total Price: ₹<span id="selected-total-value">0</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -630,7 +734,7 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         let urgentCheckbox = document.getElementById("urgent_mode");
-        let degreeSelect = document.getElementById("degree_id");
+        let degreeSelect = document.getElementById("degree_ids");
 
         urgentCheckbox.addEventListener("change", function() {
             let degreeOption = degreeSelect.querySelector(
@@ -808,7 +912,7 @@
         });
 
         // Degree change handler
-        $('#degree_id').on('change', function() {
+        $('#degree_ids').on('change', function() {
             var certificateType = $('#certificate-select').val();
             var certificate = $(this).val();
             

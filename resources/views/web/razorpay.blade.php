@@ -104,15 +104,15 @@
                                                 <div class="card-body">
                                                     <h6 class="card-title text-center mb-3">Payment Details</h6>
 
-                                                    <!-- Degree Information -->
+                                                    <!-- Selection Information -->
                                                     <div class="text-center mb-3">
-                                                        <strong>Degree: {{ $degree->name ?? 'N/A' }}</strong>
+                                                        <strong>Selected Certificates: {{ isset($baseTotal) ? 'Multiple' : 'Single' }}</strong>
                                                     </div>
 
                                                     <!-- Price Breakdown -->
                                                     <div class="d-flex justify-content-between mb-2">
-                                                        <span>Base Price:</span>
-                                                        <span>₹{{ number_format($basePrice, 2) }}</span>
+                                                        <span>Base Total:</span>
+                                                        <span>₹{{ number_format($baseTotal ?? $basePrice ?? 0, 2) }}</span>
                                                     </div>
                                                     @if ($urgentFee > 0)
                                                         <div class="d-flex justify-content-between mb-2">
@@ -153,10 +153,10 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Get the pricing data from PHP variables
-            const basePrice = {{ $basePrice }};
+            const basePrice = {{ ($baseTotal ?? $basePrice ?? 0) }};
             const urgentFee = {{ $urgentFee }};
             const totalPrice = {{ $totalPrice }};
-            const degreeName = "{{ $degree->name ?? 'N/A' }}";
+            const degreeName = "";
 
             // Function to update price display
             function updatePriceDisplay() {
